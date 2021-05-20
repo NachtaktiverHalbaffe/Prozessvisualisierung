@@ -32,8 +32,8 @@ class VisualisationTaskModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task = db.Column(db.String(20), nullable=False)
     assignedWorkingPiece = db.Column(db.Integer, nullable=True)
-    stateWorkingPiece = db.relationship(
-        'StateWorkingPieceModel', backref="tblVisualisationTaskModel", uselist=False)
+    # stateWorkingPiece = db.relationship(
+    #     'StateWorkingPieceModel', backref="tblVisualisationTaskModel", uselist=False)
 
     def __repr__(self):
         return f"VisualisationTask(id = {str(id)}, task = {task}, assignedWorkingPiece = {str(assignedWorkingPiece)})"
@@ -58,8 +58,8 @@ class StateWorkingPieceModel(db.Model):
     assembled = db.Column(db.Boolean, nullable=False)
     packaged = db.Column(db.Boolean, nullable=False)
     carrierID = db.Column(db.Integer, primary_key=True)
-    assignedTask = db.Column(
-        db.Integer, db.ForeignKey('tblVisualisationTaskModel.id'))
+    # assignedTask = db.Column(
+    #     db.Integer, db.ForeignKey('tblVisualisationTaskModel.id'))
 
     def __repr__(self):
         return f"StateWorkingPiece(state = {state}, color = {color}, assembled = {str(assembled)}, packaged = {str(packaged)}, carrierID = {str(carrierID)})"
@@ -139,7 +139,7 @@ class VisualisationTask(Resource):
     def put(self):
         # parse arguments from the request
         args = self.putArgs.parse_args()
-        if not args["tasks"] in self.DEFINED_TASKS:
+        if not args["task"] in self.DEFINED_TASKS:
             abort(
                 409, message="No valid task name. Valid task names: assemble, package, unpackage, color, generic, store, unstore")
         task = VisualisationTaskModel(
@@ -200,7 +200,7 @@ api.add_resource(VisualisationTask, '/api/VisualisationTask')
 
 if __name__ == "__main__":
     from carrierdetection.carrierdetection import CarrierDetection
-    db.create_all()
+    # db.create_all()
     # update or create state at startup
     state = StateModel.query.filter_by(id=1).first()
     if not state:
