@@ -6,14 +6,14 @@ Short description: Module for providing the REST Interface
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
-from flask import Flask
-from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
-from flask_sqlalchemy import SQLAlchemy
 import socket
+from flask_sqlalchemy import SQLAlchemy
+from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
+from flask import Flask
+import sys
+sys.path.append('.')
+sys.path.append('..')
 
-from carrierdetection.carrierdetection import CarrierDetection
-
-#from models import VisualisationTask
 
 # Flask initialisation
 app = Flask(__name__)
@@ -28,11 +28,12 @@ Models
 
 
 class VisualisationTaskModel(db.Model):
+    __tablename__ = 'tblVisualisationTaskModel'
     id = db.Column(db.Integer, primary_key=True)
     task = db.Column(db.String(20), nullable=False)
     assignedWorkingPiece = db.Column(db.Integer, nullable=True)
     stateWorkingPiece = db.relationship(
-        'StateWorkingPieceModel', backref='visualisationTaskModel', uselist=False)
+        'StateWorkingPieceModel', backref="tblVisualisationTaskModel", uselist=False)
 
     def __repr__(self):
         return f"VisualisationTask(id = {str(id)}, task = {task}, assignedWorkingPiece = {str(assignedWorkingPiece)})"
@@ -58,7 +59,7 @@ class StateWorkingPieceModel(db.Model):
     packaged = db.Column(db.Boolean, nullable=False)
     carrierID = db.Column(db.Integer, primary_key=True)
     assignedTask = db.Column(
-        db.Integer, db.ForeignKey('visualisationTaskModel.id'))
+        db.Integer, db.ForeignKey('tblVisualisationTaskModel.id'))
 
     def __repr__(self):
         return f"StateWorkingPiece(state = {state}, color = {color}, assembled = {str(assembled)}, packaged = {str(packaged)}, carrierID = {str(carrierID)})"
@@ -80,7 +81,7 @@ class StateUnit(Resource):
 
     @marshal_with(resourceFields)
     def get(self):
-        response = VisualisationTaskModel.query.first()
+        response = StateModel.query.first()
         if not response:
             abort(404, message="No state available")
         return response, 201
@@ -188,9 +189,7 @@ class VisualisationTask(Resource):
 
 
 """
-
 Adding urls to endpoints
-
 """
 
 api.add_resource(APIOverview, '/api')
@@ -200,19 +199,20 @@ api.add_resource(VisualisationTask, '/api/VisualisationTask')
 # api.add_resource(StateUnit, '/StateUnit/<string: state>')
 
 if __name__ == "__main__":
-    # db.create_all()
+    from carrierdetection.carrierdetection import CarrierDetection
+    db.create_all()
     # update or create state at startup
     state = StateModel.query.filter_by(id=1).first()
     if not state:
         state = StateModel(
             id=1,
-            ipAdress=socket.gethostbyname(socket.gethostname),
+            ipAdress=socket.gethostbyname(socket.gethostname()),
             baseLevelHeight=CarrierDetection().calibrate(),
             boundToResourceID=0,
             state="idle")
     else:
         state.id = 1
-        state.ipAdress = socket.gethostbyname(socket.gethostname)
+        state.ipAdress = socket.gethostbyname(socket.gethostname())
         state.baseLevelHeight = CarrierDetection().calibrate()
     db.session.add(state)
     db.session.commit()
