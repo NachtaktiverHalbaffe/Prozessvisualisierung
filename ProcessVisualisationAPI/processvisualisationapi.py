@@ -9,6 +9,9 @@ Short description: Module for providing the REST Interface
 from flask import Flask
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
 from flask_sqlalchemy import SQLAlchemy
+import socket
+
+from carrierdetection.carrierdetection import CarrierDetection
 
 #from models import VisualisationTask
 
@@ -198,6 +201,21 @@ api.add_resource(VisualisationTask, '/api/VisualisationTask')
 
 if __name__ == "__main__":
     # db.create_all()
+    # update or create state at startup
+    state = StateModel.query.filter_by(id=1).first()
+    if not state:
+        state = StateModel(
+            id=1,
+            ipAdress=socket.gethostbyname(socket.gethostname),
+            baseLevelHeight=CarrierDetection().calibrate(),
+            boundToResourceID=0,
+            state="idle")
+    else:
+        state.id = 1
+        state.ipAdress = socket.gethostbyname(socket.gethostname)
+        state.baseLevelHeight = CarrierDetection().calibrate()
+    db.session.add(state)
+    db.session.commit()
     # TODO send initial request to mes
     # ! In production change debug to false
     app.run(debug=True)
