@@ -28,20 +28,20 @@ class Visualiser(object):
         # resolution to render
         self.display = (1280, 720)
         # visualisation params
-        self.isAssemled = False
+        self.isAssemled = True
         self.isPackaged = False
-        self.color = '#000000'
-        self.task = 'generic'
+        self.color = '#CCCCCC'
+        self.task = 'assemble'
         self._initPygame()
 
     def displayIdle(self):
         pass
 
     def displayIncomingCarrier(self):
+        print("[VISUALISATION] Display incoming carrier")
         hasReachedTarget = False
         self.loadModel()
         while not hasReachedTarget:
-            print("inside drawing loop")
             # check user closed the game
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -55,8 +55,7 @@ class Visualiser(object):
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             # Move model 1 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
-            print(matrix[3][0])
-            if matrix[3][0] < -1:
+            if matrix[3][0] < -3:
                 glTranslatef(0.05, 0, 0)
 
             else:
@@ -66,6 +65,7 @@ class Visualiser(object):
             pygame.time.wait(40)
 
     def displayOutgoingCarrier(self):
+        print("[VISUALISATION] Display outgoing carrier")
         hasReachedTarget = False
         self.loadModel()
         while not hasReachedTarget:
@@ -82,7 +82,6 @@ class Visualiser(object):
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             # Move model 1 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
-            print(matrix[3][0])
             if matrix[3][0] < 7:
                 glTranslatef(0.05, 0, 0)
 
@@ -98,9 +97,15 @@ class Visualiser(object):
     def loadModel(self):
         if self.modelName == 'IAS-Logo':
             self.model = IASModel()
+            self.model.setAssembled(self.isAssemled)
+            self.model.setPackaged(self.isPackaged)
+            self.model.setColor(self.color)
         else:
             # IAS logo is standard model to be loaded
             self.model = IASModel()
+            self.model.setAssembled(self.isAssemled)
+            self.model.setPackaged(self.isPackaged)
+            self.model.setColor(self.color)
 
     def animateModel(self):
         if self.modelName == 'IAS-Logo':
