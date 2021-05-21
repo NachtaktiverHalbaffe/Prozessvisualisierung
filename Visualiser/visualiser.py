@@ -34,6 +34,10 @@ class Visualiser(object):
         self.task = 'assemble'
         self._initPygame()
 
+    """
+    Animations
+    """
+
     def displayIdle(self):
         pass
 
@@ -94,6 +98,10 @@ class Visualiser(object):
     def displayProcessVisualisation(self):
         pass
 
+    """
+    utils
+    """
+
     def loadModel(self):
         if self.modelName == 'IAS-Logo':
             self.model = IASModel()
@@ -118,19 +126,20 @@ class Visualiser(object):
     def _initPygame(self):
         pygame.init()
         pygame.display.set_mode(self.display, DOUBLEBUF | OPENGL)
-        # set Camera perspektive
+        # set camera perspektive
         gluPerspective(60, (self.display[0] / self.display[1]), 1, 500.0)
-
         glTranslatef(-12, -2, -5)
         glRotatef(70, 1, 0, 0)
-
-        # enable fl features
+        # enable gl features
         glEnable(GL_DEPTH_TEST)
         #glClearColor(1.0, 1.0, 1.0, 0.0)
         glShadeModel(GL_FLAT)
         glEnable(GL_COLOR_MATERIAL)
 
-    # setter for state params
+    """
+    Setter for state parameter
+    """
+
     def setIsAssembled(self, isAssembled):
         self.isAssemled = isAssembled
 
@@ -145,7 +154,7 @@ class Visualiser(object):
 
 
 if __name__ == "__main__":
-    # Testumgebung
+    # testcode to run
     from iaslogo import IASModel
     visualiser = Visualiser()
     visualiser.displayIncomingCarrier()

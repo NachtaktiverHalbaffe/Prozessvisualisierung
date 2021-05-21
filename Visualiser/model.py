@@ -6,7 +6,6 @@ Short description: 3d model Superclass
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
-import pywavefront
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -24,12 +23,10 @@ class Model(object):
         self.scaledSize = 1
         self.models = []
 
-    def _hexToRGB(self, hex):
-        colorRGBBin = tuple(int(hex[i+1:i+3], 16) for i in (0, 2, 4))
-        colorRGBFloat = tuple(color/255 for color in colorRGBBin)
-        return colorRGBFloat
+    """
+    Setter
+    """
 
-    # Setter for state values
     def setAssembled(self, isAssembled):
         self.isAssembled = isAssembled
 
@@ -39,7 +36,11 @@ class Model(object):
     def setColor(self, color):
         self.color = color
 
-        # This Methods gets model data and creates a 3D model
+    """
+    utils
+    """
+    # This Methods gets model data and creates a 3D model
+
     def _drawModel(self, model):
         # calculating parameter
         scene_box = (model.vertices[0], model.vertices[0])
@@ -63,3 +64,8 @@ class Model(object):
                     glVertex3f(*model.vertices[vertex_i])
             glEnd()
         glPopMatrix()
+
+    def _hexToRGB(self, hex):
+        colorRGBBin = tuple(int(hex[i+1:i+3], 16) for i in (0, 2, 4))
+        colorRGBFloat = tuple(color/255 for color in colorRGBBin)
+        return colorRGBFloat

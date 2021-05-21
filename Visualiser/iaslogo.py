@@ -31,7 +31,11 @@ class IASModel(Model):
             self.models.append(pywavefront.Wavefront(
                 model, collect_faces=True))
 
+    """
+    Loading and drawing models and costum animations
+    """
     # draws model with right state
+
     def animateModel(self):
         if not self.isPackaged:
             for i in range(len(self.models)):
@@ -87,4 +91,8 @@ class IASModel(Model):
 
     # animate the assemble task
     def assemble(self):
+        pass
+
+    # animates the generic task
+    def generic(self):
         pass
