@@ -57,12 +57,13 @@ class StateWorkingPieceModel(db.Model):
     color = db.Column(db.String(7), nullable=True)
     assembled = db.Column(db.Boolean, nullable=False)
     packaged = db.Column(db.Boolean, nullable=False)
+    model = db.Column(db.String(30), nullable=True)
     carrierID = db.Column(db.Integer, primary_key=True)
     # assignedTask = db.Column(
     #     db.Integer, db.ForeignKey('tblVisualisationTaskModel.id'))
 
     def __repr__(self):
-        return f"StateWorkingPiece(state = {state}, color = {color}, assembled = {str(assembled)}, packaged = {str(packaged)}, carrierID = {str(carrierID)})"
+        return f"StateWorkingPiece(state = {state}, color = {color}, assembled = {str(assembled)}, packaged = {str(packaged)}, model = {model},carrierID = {str(carrierID)})"
 
 
 """

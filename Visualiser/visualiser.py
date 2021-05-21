@@ -6,6 +6,8 @@ Short description: Module for visualisation output
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
+
+
 import pywavefront
 import OpenGL
 import pygame
@@ -13,8 +15,9 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import time
-
-from .iaslogo import IASModel
+import sys
+sys.path.append('.')
+sys.path.append('..')
 
 
 class Visualiser(object):
@@ -29,15 +32,16 @@ class Visualiser(object):
         self.isPackaged = False
         self.color = '#000000'
         self.task = 'generic'
+        self._initPygame()
 
     def displayIdle(self):
         pass
 
     def displayIncomingCarrier(self):
-        self._initPygame()
-        self.loadModel(self.modelName)
         hasReachedTarget = False
+        self.loadModel()
         while not hasReachedTarget:
+            print("inside drawing loop")
             # check user closed the game
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -51,22 +55,19 @@ class Visualiser(object):
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             # Move model 1 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
-            if matrix[3][0] != 10:
-                glTranslatef(1, 0, 0)
+            print(matrix[3][0])
+            if matrix[3][0] < -1:
+                glTranslatef(0.05, 0, 0)
+
             else:
                 hasReachedTarget = True
-            self.model
+            self.animateModel()
             pygame.display.flip()
             pygame.time.wait(40)
 
     def displayOutgoingCarrier(self):
-        self._initPygame()
-        self.loadModel('IAS-Logo')
         hasReachedTarget = False
-
-        # shift model to stopper position
-        glTranslatef(10, 0, 0)
-
+        self.loadModel()
         while not hasReachedTarget:
             # check user closed the game
             for event in pygame.event.get():
@@ -81,11 +82,13 @@ class Visualiser(object):
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             # Move model 1 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
-            if matrix[3][0] != 20:
-                glTranslatef(1, 0, 0)
+            print(matrix[3][0])
+            if matrix[3][0] < 7:
+                glTranslatef(0.05, 0, 0)
+
             else:
                 hasReachedTarget = True
-            self.model
+            self.animateModel()
             pygame.display.flip()
             pygame.time.wait(40)
 
@@ -94,12 +97,17 @@ class Visualiser(object):
 
     def loadModel(self):
         if self.modelName == 'IAS-Logo':
-            self.model = IASModel().model(isAssembled=self.isAssemled,
-                                          color=self.color, isPackaged=self.isPackaged)
+            self.model = IASModel()
         else:
             # IAS logo is standard model to be loaded
-            self.model = IASModel().model(isAssembled=self.isAssemled,
-                                          color=self.color, isPackaged=self.isPackaged)
+            self.model = IASModel()
+
+    def animateModel(self):
+        if self.modelName == 'IAS-Logo':
+            self.model.animateModel()
+        else:
+            # IAS logo is standard model to be loaded
+            self.model.animateModel()
         return
 
     def _initPygame(self):
@@ -107,10 +115,13 @@ class Visualiser(object):
         pygame.display.set_mode(self.display, DOUBLEBUF | OPENGL)
         # set Camera perspektive
         gluPerspective(60, (self.display[0] / self.display[1]), 1, 500.0)
-        glTranslatef(0.0, 0.0, -10)
+
+        glTranslatef(-12, -2, -5)
+        glRotatef(70, 1, 0, 0)
+
         # enable fl features
         glEnable(GL_DEPTH_TEST)
-        glClearColor(1.0, 1.0, 1.0, 0.0)
+        #glClearColor(1.0, 1.0, 1.0, 0.0)
         glShadeModel(GL_FLAT)
         glEnable(GL_COLOR_MATERIAL)
 
@@ -130,6 +141,10 @@ class Visualiser(object):
 
 if __name__ == "__main__":
     # Testumgebung
+    from iaslogo import IASModel
     visualiser = Visualiser()
     visualiser.displayIncomingCarrier()
+    input("Continue")
     visualiser.displayOutgoingCarrier()
+    pygame.quit()
+    quit()

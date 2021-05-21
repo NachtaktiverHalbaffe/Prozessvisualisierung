@@ -13,41 +13,80 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from .visualiser import Visualiser
+from visualiser import Visualiser
 
 
 class IASModel(object):
     def __init__(self):
+        self.isAssembled = False
+        self.isPackaged = False
+        self.staticColor = (0.007, 0.175, 0.546)
+        self.color = '#000000'
         self.modelNames = [
-            '3dmodels/IAS_Letter_I.obj',
-            '3dmodels/IAS_Letter_A.obj',
-            '3dmodels/IAS_Letter_S.obj'
+            '3dmodels/IAS_Letter_I_FINAL.obj',
+            '3dmodels/IAS_Letter_A_FINAL.obj',
+            '3dmodels/IAS_Letter_S_FINAL.obj'
         ]
-        self.scaledSize = 1
+        self.scaledSize = 4
+        self.models = []
+        for model in self.modelNames:
+            self.models.append(pywavefront.Wavefront(
+                model, collect_faces=True))
 
-    def model(self, isAssembled, color, isPackaged):
-        models = []
-        if not isPackaged:
-            for model in self.modelNames:
-                models.append(pywavefront.Wavefront(model, collect_faces=True))
-            glBegin()
-            for model in models:
-                self._drawModel(self, model)
-                if not isAssembled:
+    def animateModel(self):
+        print("Animate Model")
+        if not self.isPackaged:
+            for i in range(len(self.models)):
+                if i == 0:
+                    glPushMatrix()
+                    glTranslated(-1.2, 0, 0)
+                    glRotated(90, 0, 1, 0)
+                    glScaled(0.75, 0.75, 0.75)
+                    glEnable(GL_COLOR_MATERIAL)
+                    glColor3d(
+                        self.staticColor[0], self.staticColor[1], self.staticColor[2])
+                    self._drawModel(self.models[i])
+                    glDisable(GL_COLOR_MATERIAL)
+                    glPopMatrix()
+                elif i == 1:
+                    glPushMatrix()
+                    glRotated(90, 0, 1, 0)
+                    #glTranslated(-1, 0, 0)
+                    glEnable(GL_COLOR_MATERIAL)
+                    glColor3d(1, 1, 1)
+                    self._drawModel(self.models[i])
+                    self._drawModel(self.models[i])
+                    glDisable(GL_COLOR_MATERIAL)
+                    glPopMatrix()
+                elif i == 2:
+                    glPushMatrix()
+                    glTranslated(0.5, 0, -0.3)
+                    glRotated(90, 0, 1, 0)
+                    glEnable(GL_COLOR_MATERIAL)
+                    glColor3d(
+                        self.staticColor[0], self.staticColor[1], self.staticColor[2])
+                    self._drawModel(self.models[i])
+                    glDisable(GL_COLOR_MATERIAL)
+                    glPopMatrix()
+                if not self.isAssembled:
                     # TODO shift parts so it looks disassembled
-                    pass
-                if color != "#000000":
+                    if i == 0:
+                        glTranslatef(-1, 0, 0)
+                    elif i == 2:
+                        glTranslatef(1, 0, 0)
+                if self.color != "#000000":
                     # Convert color to RGB
                     colorRGB = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-                    # Colorize
-                    glColor3fv(colorRGB)
+                    # Colorize only the "A" letter
+                    if i == 1:
+                        glColor3fv(colorRGB)
                     pass
-            glEnd()
+            # glEnd()
         else:
             # TODO insert packaged model
             pass
 
-    def assemble(self, color):
+    def assemble(self):
         models = []
         for model in self.modelNames:
             models.append(pywavefront.Wavefront(model, collect_faces=True))
