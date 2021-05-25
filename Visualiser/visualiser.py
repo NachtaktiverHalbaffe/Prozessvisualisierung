@@ -30,8 +30,9 @@ class Visualiser(object):
         # visualisation params
         self.isAssemled = True
         self.isPackaged = False
+        self.paintColor = "#00fcef"
         self.color = '#CCCCCC'
-        self.task = 'assemble'
+        self.task = 'color'
         self._initPygame()
 
     """
@@ -57,6 +58,10 @@ class Visualiser(object):
                         quit()
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glEnable(GL_LIGHTING)
+            glEnable(GL_LIGHT0)
+            glEnable(GL_COLOR_MATERIAL)
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
             # Move model 1 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < -3:
@@ -65,13 +70,17 @@ class Visualiser(object):
             else:
                 hasReachedTarget = True
             self.animateModel()
+
+            glDisable(GL_LIGHT0)
+            glDisable(GL_LIGHTING)
+            glDisable(GL_COLOR_MATERIAL)
             pygame.display.flip()
             pygame.time.wait(40)
+        return True
 
     def displayOutgoingCarrier(self):
         print("[VISUALISATION] Display outgoing carrier")
         hasReachedTarget = False
-        self.loadModel()
         while not hasReachedTarget:
             # check user closed the game
             for event in pygame.event.get():
@@ -84,7 +93,11 @@ class Visualiser(object):
                         quit()
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            # Move model 1 unit on x-axis
+            glEnable(GL_LIGHTING)
+            glEnable(GL_LIGHT0)
+            glEnable(GL_COLOR_MATERIAL)
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+            # Move model 0.05 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < 7:
                 glTranslatef(0.05, 0, 0)
@@ -92,11 +105,65 @@ class Visualiser(object):
             else:
                 hasReachedTarget = True
             self.animateModel()
+
+            glDisable(GL_LIGHT0)
+            glDisable(GL_LIGHTING)
+            glDisable(GL_COLOR_MATERIAL)
             pygame.display.flip()
             pygame.time.wait(40)
+        return True
 
     def displayProcessVisualisation(self):
-        pass
+        if self.task == 'assemble':
+            self.model.assemble()
+        elif self.task == 'color':
+            self.paint()
+        elif self.task == 'package':
+            self.package()
+        elif self.task == 'unpackage':
+            self.unpackage()
+        elif self.task == 'generic':
+            self.model.generic()
+        return True
+
+    def paint(self):
+        print("[VISUALISATION] Display painting process")
+        isColored = False
+        timeStart = time.time()
+        self.loadModel()
+        self.model.setAlpha(0)
+        self.model.setPaintColor(self.paintColor)
+        while not isColored:
+            # check user closed the game
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        quit()
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glEnable(GL_LIGHTING)
+            glEnable(GL_LIGHT0)
+            glEnable(GL_COLOR_MATERIAL)
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+            # Move model 0.05 unit on x-axis
+            currentTime = time.time() - timeStart
+            if currentTime < 5:
+                self.model.setAlpha(0.2 * currentTime)
+                self.animateModel()
+            else:
+                isColored = True
+                self.model.setAlpha(1)
+                self.animateModel()
+            glDisable(GL_LIGHT0)
+            glDisable(GL_LIGHTING)
+            glDisable(GL_COLOR_MATERIAL)
+            pygame.display.flip()
+            pygame.time.wait(40)
+        self.model.setColor(self.paintColor)
+        return True
 
     """
     utils
@@ -134,6 +201,11 @@ class Visualiser(object):
         glEnable(GL_DEPTH_TEST)
         #glClearColor(1.0, 1.0, 1.0, 0.0)
         glShadeModel(GL_FLAT)
+
+        glEnable(GL_LIGHTING)
+        glLight(GL_LIGHT0, GL_POSITION,  (0, 1, -7, 0))
+        glLightfv(GL_LIGHT0, GL_AMBIENT, (1, 1, 1, 1))
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, (2, 2, 2, 1))
         glEnable(GL_COLOR_MATERIAL)
 
     """
@@ -158,6 +230,8 @@ if __name__ == "__main__":
     from iaslogo import IASModel
     visualiser = Visualiser()
     visualiser.displayIncomingCarrier()
+    input("Continue")
+    visualiser.displayProcessVisualisation()
     input("Continue")
     visualiser.displayOutgoingCarrier()
     pygame.quit()

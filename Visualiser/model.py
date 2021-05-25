@@ -19,6 +19,8 @@ class Model(object):
         self.isPackaged = False
         self.staticColor = (0.0, 0.0, 0.0)
         self.color = '#000000'
+        self.paintColor = '#000000'
+        self.alpha = 1
         self.modelNames = []
         self.scaledSize = 1
         self.models = []
@@ -35,6 +37,12 @@ class Model(object):
 
     def setColor(self, color):
         self.color = color
+
+    def setAlpha(self, alpha):
+        self.alpha = alpha
+
+    def setPaintColor(self, paintColor):
+        self.paintColor = paintColor
 
     """
     utils
@@ -66,6 +74,7 @@ class Model(object):
         glPopMatrix()
 
     def _hexToRGB(self, hex):
-        colorRGBBin = tuple(int(hex[i+1:i+3], 16) for i in (0, 2, 4))
-        colorRGBFloat = tuple(color/255 for color in colorRGBBin)
+        colorRGBBin = tuple(int(hex[i:i+2], 16) for i in (1, 3, 5))
+        colorRGBFloat = tuple(color / 255. for color in colorRGBBin)
+        print(colorRGBBin)
         return colorRGBFloat
