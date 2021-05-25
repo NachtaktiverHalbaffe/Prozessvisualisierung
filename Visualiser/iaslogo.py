@@ -14,6 +14,7 @@ from OpenGL.GLU import *
 import time
 
 from model import Model
+from package import PackageModel
 
 
 class IASModel(Model):
@@ -101,7 +102,7 @@ class IASModel(Model):
                     glDisable(GL_COLOR_MATERIAL)
                     glPopMatrix()
         else:
-            # TODO insert packaged model
+            PackageModel().animateModel()
             pass
 
     # animate the assemble task

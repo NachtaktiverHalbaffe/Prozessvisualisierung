@@ -76,5 +76,4 @@ class Model(object):
     def _hexToRGB(self, hex):
         colorRGBBin = tuple(int(hex[i:i+2], 16) for i in (1, 3, 5))
         colorRGBFloat = tuple(color / 255. for color in colorRGBBin)
-        print(colorRGBBin)
         return colorRGBFloat

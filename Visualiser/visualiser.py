@@ -8,6 +8,7 @@ Short description: Module for visualisation output
 """
 
 
+from package import PackageModel
 import pywavefront
 import OpenGL
 import pygame
@@ -32,7 +33,7 @@ class Visualiser(object):
         self.isPackaged = False
         self.paintColor = "#00fcef"
         self.color = '#CCCCCC'
-        self.task = 'color'
+        self.task = 'package'
         self._initPygame()
 
     """
@@ -165,6 +166,80 @@ class Visualiser(object):
         self.model.setColor(self.paintColor)
         return True
 
+    def unpackage(self):
+        print("[VISUALISATION] Display painting process")
+        isFinished = False
+        timeStart = time.time()
+        self.model.setPackaged(False)
+        while not isFinished:
+            # check user closed the game
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        quit()
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glEnable(GL_LIGHTING)
+            glEnable(GL_LIGHT0)
+            glEnable(GL_COLOR_MATERIAL)
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+            # Move model 0.05 unit on x-axis
+            currentTime = time.time() - timeStart
+            if currentTime < 5:
+                PackageModel().unpackage(currentTime)
+                self.animateModel()
+            else:
+                isFinished = True
+                PackageModel().unpackage(currentTime)
+                self.animateModel()
+            glDisable(GL_LIGHT0)
+            glDisable(GL_LIGHTING)
+            glDisable(GL_COLOR_MATERIAL)
+            pygame.display.flip()
+            pygame.time.wait(40)
+
+        return True
+
+    def package(self):
+        print("[VISUALISATION] Display painting process")
+        isFinished = False
+        timeStart = time.time()
+
+        while not isFinished:
+            # check user closed the game
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        quit()
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glEnable(GL_LIGHTING)
+            glEnable(GL_LIGHT0)
+            glEnable(GL_COLOR_MATERIAL)
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+            # Move model 0.05 unit on x-axis
+            currentTime = time.time() - timeStart
+            if currentTime < 5:
+                PackageModel().package(currentTime)
+                self.animateModel()
+            else:
+                isFinished = True
+                PackageModel().package(currentTime)
+                self.animateModel()
+            glDisable(GL_LIGHT0)
+            glDisable(GL_LIGHTING)
+            glDisable(GL_COLOR_MATERIAL)
+            pygame.display.flip()
+            pygame.time.wait(40)
+        self.model.setPackaged(True)
+        return True
+
     """
     utils
     """
@@ -196,7 +271,7 @@ class Visualiser(object):
         # set camera perspektive
         gluPerspective(60, (self.display[0] / self.display[1]), 1, 500.0)
         glTranslatef(-12, -2, -5)
-        glRotatef(70, 1, 0, 0)
+        glRotatef(60, 1, 0, 0)
         # enable gl features
         glEnable(GL_DEPTH_TEST)
         #glClearColor(1.0, 1.0, 1.0, 0.0)
