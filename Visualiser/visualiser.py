@@ -7,8 +7,6 @@ Short description: Module for visualisation output
 
 """
 
-
-from package import PackageModel
 import pywavefront
 import OpenGL
 import pygame
@@ -295,6 +293,9 @@ class Visualiser(object):
 
     def setColor(self, color):
         self.color = color
+
+    def setPaintColor(self, paintColor):
+        self.paintColor = paintColor
 
     def setModelName(self, name):
         self.modelName = name

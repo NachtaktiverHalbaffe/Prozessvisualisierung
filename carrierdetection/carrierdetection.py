@@ -17,7 +17,7 @@ class CarrierDetection(object):
         self.GPIO_TRIGGER_2 = 4  # GPIO4
         self.GPIO_ECHO_1 = 24  # GPIO24
         self.GPIO_ECHO_2 = 17  # GPIO4
-        # GPIO.setmode(GPIO.BCM)
+        # GPIO.setmode(GPIO.BOARD)
         # GPIO.setwarnings(False)
         # GPIO.setup(self.GPIO_TRIGGER_1, GPIO.OUT)
         # GPIO.setup(self.GPIO_ECHO_1, GPIO.IN)
@@ -37,7 +37,9 @@ class CarrierDetection(object):
 
         while True:
             distanceEntrance = self._measureEntrance()
+            time.sleep(0.5)
             distanceExit = self._measureExit()
+            time.sleep(0.5)
 
             if expected == 'entrance':
                 if baseLevelHeight - distanceExit > 4:
