@@ -15,7 +15,7 @@ from settings import db  # nopep8
 
 
 class VisualisationTaskModel(db.Model):
-    __tablename__ = 'tblVisualisationTaskModel'
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     task = db.Column(db.String(20), nullable=False)
     assignedWorkingPiece = db.Column(db.Integer, nullable=True)
@@ -28,6 +28,7 @@ class VisualisationTaskModel(db.Model):
 
 
 class StateModel(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     state = db.Column(db.String(20), nullable=False)
     boundToResourceID = db.Column(db.Integer)
@@ -39,6 +40,7 @@ class StateModel(db.Model):
 
 
 class StateWorkingPieceModel(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     state = db.Column(db.String(20), nullable=True)
     pNo = db.Column(db.Integer, nullable=True)

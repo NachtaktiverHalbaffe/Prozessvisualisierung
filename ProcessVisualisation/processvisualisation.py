@@ -6,14 +6,14 @@ Short description: Module for handling processvisualisation
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
-import threading
+
+from threading import Thread
 import sys
 sys.path.append('.')
 sys.path.append('..')
 
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8
-from processvisualisationapi import settings  # nopep8
-from processvisualisationapi.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
+from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
 from visualiser.visualiser import Visualiser  # nopep8
 
 
@@ -31,7 +31,6 @@ class ProcessVisualisation(object):
         self.model = "IAS-Logo"
         self.baseLevelHeight = 0.0
         self.visualiser = None
-        self.updateOrder()
 
     def executeOrder(self):
         # get parameter for task and setup visualiser
@@ -43,14 +42,20 @@ class ProcessVisualisation(object):
         self.visualiser.displayIdle()
         if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
             self._updateState("playing")
-            self.visualiser.displayIncomingCarrier
+            displayIncomingThread = Thread(
+                target=self.visualiser.displayIncomingCarrier)
+            displayIncomingThread.start()
+            displayIncomingThread.join()
         elif not CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
             # TODO error
             pass
 
         # display process
         self._updateStateWorkingPiece()
-        self.visualiser.displayProcessVisualisation()
+        displayProcess = Thread(
+            target=self.visualiser.displayProcessVisualisation)
+        displayProcess.start()
+        displayProcess.join()
         self._updateState("finished")
         # update parameter if task is finished
         workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
@@ -72,7 +77,10 @@ class ProcessVisualisation(object):
         self._updateStateWorkingPiece()
         self._updateState("finished")
         if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
-            self.visualiser.displayProcessVisualisation()
+            displayOutgoingThread = Thread(
+                target=self.visualiser.displayProcessVisualisation)
+            displayOutgoingThread.start()
+            displayOutgoingThread.join()
         elif not CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
             # TODO error
             pass

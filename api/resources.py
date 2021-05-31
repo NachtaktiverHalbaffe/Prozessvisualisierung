@@ -7,8 +7,8 @@ Short description: resources for flask api
 
 """
 from models import *
-from settings import db
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
+from multiprocessing import Process
 
 
 class StateUnit(Resource):
@@ -95,6 +95,13 @@ class VisualisationTask(Resource):
         db.session.add(task)
         db.session.commit()
 
+        # start visualisation task
+        processVisualisation_process = Process(
+            target=processVisualisation.executeOrder)
+        try:
+            processVisualisation_process.start()
+        except Exception as e:
+            pass
         return task, 201
 
     def delete(self):
@@ -132,6 +139,9 @@ class VisualisationTask(Resource):
         # save object to databse
         db.session.add(task)
         db.session.commit()
+
+        # update processvisualisation
+        processVisualisation.updateOrder()
         return task, 202
 
 
