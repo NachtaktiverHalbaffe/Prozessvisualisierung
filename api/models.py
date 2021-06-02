@@ -11,7 +11,8 @@ Short description: data models
 import sys
 sys.path.append('.')
 sys.path.append('..')
-from settings import db  # nopep8
+from settings import db, processVisualisation  # nopep8
+processVisualisation = processVisualisation
 
 
 class VisualisationTaskModel(db.Model):
@@ -42,14 +43,12 @@ class StateModel(db.Model):
 class StateWorkingPieceModel(db.Model):
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
-    state = db.Column(db.String(20), nullable=True)
-    pNo = db.Column(db.Integer, nullable=True)
-    resourceID = db.Column(db.Integer)
+    pieceID = db.Column(db.Integer, nullable=False)
     color = db.Column(db.String(7), nullable=True)
     isAssembled = db.Column(db.Boolean, nullable=False)
     isPackaged = db.Column(db.Boolean, nullable=False)
+    carrierID = db.Column(db.Integer, nullable=True)
     model = db.Column(db.String(100), nullable=True)
-    carrierID = db.Column(db.Integer, primary_key=True)
     # assignedTask = db.Column(
     #     db.Integer, db.ForeignKey('tblVisualisationTaskModel.id'))
 

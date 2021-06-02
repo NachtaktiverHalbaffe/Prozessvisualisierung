@@ -9,12 +9,13 @@ Short description: Module for handling processvisualisation
 
 from threading import Thread
 import sys
+import requests
 sys.path.append('.')
 sys.path.append('..')
 
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8
-from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
 from visualiser.visualiser import Visualiser  # nopep8
+#from api.settings import IP_MES  # nopep8
 
 
 class ProcessVisualisation(object):
@@ -33,6 +34,9 @@ class ProcessVisualisation(object):
         self.visualiser = None
 
     def executeOrder(self):
+        from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
+        from api.settings import IP_MES
+
         # get parameter for task and setup visualiser
         self.updateOrder()
         self.visualiser = Visualiser()
@@ -69,9 +73,19 @@ class ProcessVisualisation(object):
             self.isPackaged = True
         elif self.task == "unpackage":
             self.isPackaged == False
-        workingPiece.isPackaged = self.isPackaged
+            workingPiece.isPackaged = self.isPackaged
         self.db.session.add(workingPiece)
         self.db.session.commit()
+        # update stateworkingpiece in mes
+        data = {
+            "isPackaged": workingPiece.isPackaged,
+            "isAssembled": workingPiece.isAssenbled,
+            "color": workingPiece.color,
+        }
+        request = requests.patch(
+            IP_MES + ":8000/api/StateVisualisationUnit/" + workingPiece.id, data=data)
+        if not request.ok:
+            pass
 
         # display outgoing carrier
         self._updateStateWorkingPiece()
@@ -94,6 +108,7 @@ class ProcessVisualisation(object):
         self.db.session.commit()
 
     def updateOrder(self):
+        from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         # update task data
         task = VisualisationTaskModel.query.filter_by(id=1).first()
         self.id = task.id
@@ -103,7 +118,7 @@ class ProcessVisualisation(object):
 
         # update state of workingpiece
         workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
-        self.model = workingPiece.modelName
+        self.model = workingPiece.model
         self.isAssemled = workingPiece.isAssembled
         self.isPackaged = workingPiece.isPackaged
         self.color = workingPiece.color
@@ -112,6 +127,7 @@ class ProcessVisualisation(object):
         self.baseLevelHeight = state.baseLevelHeight
 
     def _updateStateWorkingPiece(self):
+        from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         self.visualiser.setColor(self.color)
         self.visualiser.setPaintColor(self.paintColor)
         self.visualiser.setIsAssembled(self.isAssemled)
@@ -119,7 +135,18 @@ class ProcessVisualisation(object):
         self.visualiser.setModelName(self.model)
 
     def _updateState(self, newState):
+        from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
+        from api.settings import IP_MES
         state = StateModel.query.filter_by(id=1).first()
         state.state = newState
         self.db.session.add(state)
         self.db.session.commit()
+
+        # send update to mes
+        data = {
+            "state": newState
+        }
+        request = requests.patch(
+            IP_MES + ":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
+        if not request.ok:
+            pass

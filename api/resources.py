@@ -6,9 +6,13 @@ Short description: resources for flask api
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
+from api.models import StateWorkingPieceModel
 from models import *
+from settings import IP_MES, processVisualisation
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
 from multiprocessing import Process
+import requests
+from threading import Thread
 
 
 class StateUnit(Resource):
@@ -63,6 +67,9 @@ class VisualisationTask(Resource):
                                   help="Ressource ID of the workingpiece with which the task should be run")
         self.putArgs.add_argument("paintColor", type=str,
                                   help="Color for painting if task is color")
+        self.putArgs.add_argument("paintColor", type=str,
+                                  help="Color for painting if task is color")
+
         self.patchArgs = reqparse.RequestParser()
         self.patchArgs.add_argument(
             "task", type=str, help="Task which should be executed")
@@ -95,13 +102,34 @@ class VisualisationTask(Resource):
         db.session.add(task)
         db.session.commit()
 
+        # get StateWorkingPiece
+        request = requests.get(
+            IP_MES + ":8000/api/StateWorkingPiece/" + str(task.assignedWorkingPiece))
+        if request.ok:
+            data = request.json()
+            stateWorkingPiece = StateWorkingPieceModel(
+                id=1,
+                pieceID=data["id"],
+                color=data["color"],
+                isAssembled=data["isAssembled"],
+                isPackaged=data["isPackaged"],
+                model=data["model"]
+            )
+            if StateWorkingPieceModel.query.filter_by(id=1).count() == 1:
+                db.session.delete(
+                    StateWorkingPieceModel.query.filter_by(id=1).first())
+            db.session.add(stateWorkingPiece)
+            db.session.commit()
+
         # start visualisation task
-        processVisualisation_process = Process(
+        processVisualisation_process = Thread(
             target=processVisualisation.executeOrder)
         try:
             processVisualisation_process.start()
         except Exception as e:
-            pass
+            print(e)
+        # processVisualisation.executeOrder()
+
         return task, 201
 
     def delete(self):
@@ -148,9 +176,7 @@ class VisualisationTask(Resource):
 class StateWorkingPiece(Resource):
     resourceFields = {
         'id': fields.Integer,
-        'state': fields.String,
-        'pNo': fields.Integer,
-        'ressourceID': fields.Integer,
+        'pieceID': fields.Integer,
         'color': fields.String,
         'isAssembled': fields.Boolean,
         'isPackaged': fields.Boolean,
@@ -163,12 +189,8 @@ class StateWorkingPiece(Resource):
         self.putArgs = reqparse.RequestParser()
         self.putArgs.add_argument(
             "id", type=int, help="id of the dataset")
-        self.putArgs.add_argument("state", type=str,
-                                  help="State")
-        self.putArgs.add_argument("pNo", type=int,
-                                  help="Part number of the workingpiece")
         self.putArgs.add_argument(
-            "resourceID", type=int, help="Id of the ressource where the workingpiece is located", required=True)
+            "pieceID", type=int, help="Id of the workingPiece", required=True)
         self.putArgs.add_argument(
             "color", type=str, help="Current color of the workingpiece", required=True)
         self.putArgs.add_argument(
@@ -183,12 +205,8 @@ class StateWorkingPiece(Resource):
         self.patchArgs = reqparse.RequestParser()
         self.patchArgs.add_argument(
             "id", type=int, help="id of the dataset")
-        self.patchArgs.add_argument("state", type=str,
-                                    help="State")
-        self.patchArgs.add_argument("pNo", type=int,
-                                    help="Part number of the workingpiece")
         self.patchArgs.add_argument(
-            "resourceID", type=int, help="Id of the ressource where the workingpiece is located")
+            "pieceID", type=int, help="Id of the workingPiece", required=True)
         self.patchArgs.add_argument(
             "color", type=str, help="Current color of the workingpiece")
         self.patchArgs.add_argument(
@@ -201,6 +219,7 @@ class StateWorkingPiece(Resource):
             "carrierID", type=int, help="Id of carrier where workingpiece is located")
 
     # handle put request
+
     @marshal_with(resourceFields)
     def put(self):
         # parse arguments from the request
@@ -210,9 +229,7 @@ class StateWorkingPiece(Resource):
                 409, message="No valid task name. Valid task names: assemble, package, unpackage, color, generic, store, unstore")
         stateWorkingPieceModel = StateWorkingPieceModel(
             id=1,
-            state=args['state'],
-            pNo=args['pNo'],
-            resourceID=args['resourceID'],
+            pieceID=args['pieceID'],
             color=args['color'],
             isAssembled=args['isAssembled'],
             isPackaged=args['isPackaged'],
@@ -225,7 +242,7 @@ class StateWorkingPiece(Resource):
         db.session.add(stateWorkingPieceModel)
         db.session.commit()
 
-        return task, 201
+        return stateWorkingPieceModel, 201
 
     def delete(self):
         stateWorkingPieceModel = StateWorkingPieceModel.query.filter_by(
@@ -274,6 +291,10 @@ class StateWorkingPiece(Resource):
         # save object to databse
         db.session.add(stateWorkingPieceModel)
         db.session.commit()
+
+        # update processvisualisation
+        processVisualisation.updateOrder()
+
         return stateWorkingPieceModel, 202
 
 
