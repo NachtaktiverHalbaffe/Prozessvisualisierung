@@ -8,7 +8,7 @@ Short description: resources for flask api
 """
 from api.models import StateWorkingPieceModel
 from models import *
-from settings import IP_MES, processVisualisation
+from settings import IP_MES, processVisualisation, processVisualisation_thread
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
 from multiprocessing import Process
 import requests
@@ -122,10 +122,10 @@ class VisualisationTask(Resource):
             db.session.commit()
 
         # start visualisation task
-        processVisualisation_process = Thread(
-            target=processVisualisation.executeOrder)
+
         try:
-            processVisualisation_process.start()
+            processVisualisation.reviveVisualiser()
+            processVisualisation_thread.start()
         except Exception as e:
             print(e)
         # processVisualisation.executeOrder()
@@ -137,7 +137,31 @@ class VisualisationTask(Resource):
         if not task:
             abort(404, message="No task found")
         db.session.delete(task)
+
+        # change state
+        state = StateModel.query.filter_by(id=1).first()
+        state.state = "idle"
+        db.session.add(state)
         db.session.commit()
+
+        data = {
+            "state": state.state,
+            "ipAdress": state.ipAdress,
+            "boundToRessource": state.boundToResourceID,
+            "baseLevelHeight": state.baseLevelHeight,
+            "assignedTask": "None",
+        }
+        # inform mes and quit processvisualisation
+        processVisualisation.killVisualiser()
+        request = requests.post(
+            IP_MES+":8000/api/StateVisualisationUnit/", data=data)
+        if not request.ok:
+            # already exists => update it
+            request = requests.patch(
+                IP_MES+":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
+            if not request.ok:
+                # error
+                pass
         return "", 204
 
     @marshal_with(resourceFields)
@@ -250,6 +274,11 @@ class StateWorkingPiece(Resource):
         if not stateWorkingPieceModel:
             abort(404, message="No state of workingpiece found")
         db.session.delete(stateWorkingPieceModel)
+
+        # change state
+        state = StateModel.query.filter_by(id=1).first()
+        state.state = "idle"
+        db.session.add(state)
         db.session.commit()
         return "", 204
 
@@ -307,6 +336,26 @@ class BindToResource(Resource):
 
     @ marshal_with(resourceFields)
     def post(self, bindToResource):
+        state = StateModel.query.first()
+        if not state:
+            abort(404, message="No state available")
+        state.boundToResourceID = bindToResource
+        db.session.add(state)
+        db.session.commit()
+        return state, 201
+
+    @ marshal_with(resourceFields)
+    def put(self, bindToResource):
+        state = StateModel.query.first()
+        if not state:
+            abort(404, message="No state available")
+        state.boundToResourceID = bindToResource
+        db.session.add(state)
+        db.session.commit()
+        return state, 201
+
+    @ marshal_with(resourceFields)
+    def get(self, bindToResource):
         state = StateModel.query.first()
         if not state:
             abort(404, message="No state available")

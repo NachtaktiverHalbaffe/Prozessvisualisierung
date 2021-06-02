@@ -22,6 +22,7 @@ sys.path.append('..')
 class Visualiser(object):
 
     def __init__(self):
+        self.isKilled = False
         self.modelName = 'IAS-Logo'
         self.model = None
         # resolution to render
@@ -39,7 +40,10 @@ class Visualiser(object):
     """
 
     def displayIdle(self):
-        pass
+        while not self.isKilled:
+            pass
+        pygame.quit()
+        quit()
 
     def displayIncomingCarrier(self):
         print("[VISUALISATION] Display incoming carrier")
@@ -55,7 +59,9 @@ class Visualiser(object):
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         quit()
-
+            if self.isKilled:
+                pygame.quit()
+                quit()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -90,6 +96,10 @@ class Visualiser(object):
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         quit()
+            # check if visualiser is killed
+            if self.isKilled:
+                pygame.quit()
+                quit()
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
@@ -142,6 +152,12 @@ class Visualiser(object):
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         quit()
+
+            # check if visualiser is killed
+            if self.isKilled:
+                pygame.quit()
+                quit()
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -179,6 +195,12 @@ class Visualiser(object):
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         quit()
+
+             # check if visualiser is killed
+            if self.isKilled:
+                pygame.quit()
+                quit()
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -216,6 +238,11 @@ class Visualiser(object):
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         quit()
+             # check if visualiser is killed
+            if self.isKilled:
+                pygame.quit()
+                quit()
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -299,6 +326,12 @@ class Visualiser(object):
 
     def setModelName(self, name):
         self.modelName = name
+
+    def killVisualiser(self):
+        self.isKilled = True
+
+    def reviveVisualiser(self):
+        self.isKilled = False
 
 
 if __name__ == "__main__":

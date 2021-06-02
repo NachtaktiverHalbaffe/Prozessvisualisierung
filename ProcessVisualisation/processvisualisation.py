@@ -81,6 +81,7 @@ class ProcessVisualisation(object):
             "isPackaged": workingPiece.isPackaged,
             "isAssembled": workingPiece.isAssenbled,
             "color": workingPiece.color,
+            "storageLocation": 0,
         }
         request = requests.patch(
             IP_MES + ":8000/api/StateVisualisationUnit/" + workingPiece.id, data=data)
@@ -150,3 +151,11 @@ class ProcessVisualisation(object):
             IP_MES + ":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
         if not request.ok:
             pass
+
+    def killVisualiser(self):
+        if self.visualiser != None:
+            self.visualiser.killVisualiser()
+
+    def reviveVisualiser(self):
+        if self.visualiser != None:
+            self.visualiser.reviveVisualiser()
