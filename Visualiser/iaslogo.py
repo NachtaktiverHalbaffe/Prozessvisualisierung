@@ -113,84 +113,7 @@ class IASModel(Model):
             pass
 
     # animate the assemble task
-    def assemble(self):
-        print("[VISUALISATION] Assemble working Piece")
-        skybox = Skybox()
-        texture_id = skybox.loadTexture()
-        hasFinished = False
-        timeStart = time.time()
-
-        # drawing loop
-        while not hasFinished:
-            # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        quit()
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-            currentTime = time.time() - timeStart
-            if currentTime < 5:
-                self._animationAssemble(currentTime)
-            else:
-                hasFinished = True
-                self._animationAssemble(currentTime)
-            skybox.ground()
-            pygame.display.flip()
-            pygame.time.wait(40)
-        self.isAssembled = True
-        glDeleteTextures(texture_id)
-        return True
-
-    # animates the generic task
-    def generic(self):
-        print("[VISUALISATION] Generic Task: Check working Piece")
-        skybox = Skybox()
-        texture_id = skybox.loadTexture()
-        hasFinished = False
-        timeStart = time.time()
-
-        # drawing loop
-        while not hasFinished:
-            # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        quit()
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-            currentTime = time.time() - timeStart
-            if currentTime < 2:
-                self._animationAssemble(currentTime)
-            else:
-                hasFinished = True
-                self._animationAssemble(currentTime)
-            skybox.ground()
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
-            glDisable(GL_COLOR_MATERIAL)
-            pygame.display.flip()
-            pygame.time.wait(40)
-        glDeleteTextures(texture_id)
-        return True
-
-    def _animationAssemble(self, time):
+    def assemble(self, time):
         for i in range(len(self.models)):
             if i == 0:
                 # correcting position
@@ -226,7 +149,8 @@ class IASModel(Model):
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
 
-    def _flipAnimation(self, time):
+    # animates the generic task
+    def generic(self, time):
         for i in range(len(self.models)):
             if i == 0:
                 # correcting position

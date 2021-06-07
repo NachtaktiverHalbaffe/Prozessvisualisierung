@@ -45,29 +45,18 @@ class Visualiser(object):
         print("[VISUALISATION] Display idle")
         skybox = Skybox()
         texture_id = skybox.loadTexture()
+
+        # drawing loop
         while not self.isKilled:
             # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    glDeleteTextures(texture_id)
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        glDeleteTextures(texture_id)
-                        pygame.quit()
-                        quit()
+            self._eventLoop(texture_id)
             if self.isKilled:
                 glDeleteTextures(texture_id)
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+                break
+
+            self._enableGLFeatures(True)
             skybox.ground()
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
-            glDisable(GL_COLOR_MATERIAL)
+            self._enableGLFeatures(False)
             pygame.display.flip()
             pygame.time.wait(40)
 
@@ -81,36 +70,25 @@ class Visualiser(object):
         self.loadModel()
         # drawing loop
         while not hasReachedTarget:
-            # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    glDeleteTextures(texture_id)
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        glDeleteTextures(texture_id)
-                        pygame.quit()
-                        quit()
+            # check events and params
+            self._eventLoop(texture_id)
             if self.isKilled:
                 glDeleteTextures(texture_id)
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+                break
+
+            self._enableGLFeatures(True)
             # Move model 1 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < -3:
-                glTranslatef(0.05, 0, 0)
+                glTranslatef(0.1, 0, 0)
 
             else:
                 hasReachedTarget = True
+
+            # drawing
             skybox.ground()
             self.animateModel()
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
-            glDisable(GL_COLOR_MATERIAL)
+            self._enableGLFeatures(False)
 
             pygame.display.flip()
             pygame.time.wait(40)
@@ -126,32 +104,17 @@ class Visualiser(object):
 
         # drawing loop
         while not hasReachedTarget:
-            # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        quit()
-            # check if visualiser is killed
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+            self._eventLoop(texture_id)
+
+            self._enableGLFeatures(True)
             # Move model 0.05 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < 7:
-                glTranslatef(0.05, 0, 0)
-
+                glTranslatef(0.1, 0, 0)
             else:
                 hasReachedTarget = True
             self.animateModel()
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
-            glDisable(GL_COLOR_MATERIAL)
+            self._enableGLFeatures(False)
             skybox.ground()
             pygame.display.flip()
             pygame.time.wait(40)
@@ -160,154 +123,70 @@ class Visualiser(object):
         return True
 
     def displayProcessVisualisation(self):
-        if self.task == 'assemble':
-            self.model.assemble()
-        elif self.task == 'color':
-            self.paint()
-        elif self.task == 'package':
-            self.package()
-        elif self.task == 'unpackage':
-            self.unpackage()
-        elif self.task == 'generic':
-            self.model.generic()
-        return True
-
-    def paint(self):
-        print("[VISUALISATION] Display painting process")
+        print("[VISUALISER] Display processvisualisation")
+        DRY_TIME = 3
         skybox = Skybox()
         texture_id = skybox.loadTexture()
-        isColored = False
+        finished = False
         timeStart = time.time()
-        self.loadModel()
-        self.model.setAlpha(0)
-        self.model.setPaintColor(self.paintColor)
 
-        # drawing loop
-        while not isColored:
-            # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        quit()
-
-            # check if visualiser is killed
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-            # Move model 0.05 unit on x-axis
+        while not finished:
+            self._eventLoop(texture_id)
+            self._enableGLFeatures(True)
             currentTime = time.time() - timeStart
-            if currentTime < 5:
-                self.model.setAlpha(0.2 * currentTime)
-                self.animateModel()
-            else:
-                isColored = True
-                self.model.setAlpha(1)
-                self.animateModel()
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
-            glDisable(GL_COLOR_MATERIAL)
+            if self.task == 'assemble':
+                if currentTime < 5:
+                    self.model.assemble(currentTime)
+                else:
+                    finished = True
+                    self.isAssemled = True
+                    self.model.assemble(currentTime)
+            elif self.task == 'color':
+                if currentTime < 5:
+                    self.paint(currentTime)
+                elif currentTime < 5 + DRY_TIME:
+                    self.paint(5)
+                else:
+                    finished = True
+                    self.model.setColor(self.paintColor)
+                    self.paint(currentTime)
+            elif self.task == 'package':
+                if currentTime < 5:
+                    self.package(currentTime)
+                else:
+                    finished = True
+                    self.package(currentTime)
+                    self.isPackaged = True
+            elif self.task == 'unpackage':
+                if currentTime < 5:
+                    self.unpackage(currentTime)
+                else:
+                    finished = True
+                    self.unpackage(currentTime)
+                    self.isPackaged = False
+            elif self.task == 'generic':
+                if currentTime < 5:
+                    self.generic(currentTime)
+                else:
+                    finished = True
+                    self.generic(currentTime)
             skybox.ground()
+            self._enableGLFeatures(False)
             pygame.display.flip()
             pygame.time.wait(40)
-
-        self.model.setColor(self.paintColor)
-        glDeleteTextures(texture_id)
         return True
 
-    def unpackage(self):
-        print("[VISUALISATION] Display painting process")
-        skybox = Skybox()
-        texture_id = skybox.loadTexture()
-        isFinished = False
-        timeStart = time.time()
-        self.model.setPackaged(False)
+    def paint(self, currentTime):
+        self.model.setAlpha(0.2 * currentTime)
+        self.animateModel()
 
-        # drawing loop
-        while not isFinished:
-            # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        quit()
+    def unpackage(self, currentTime):
+        PackageModel().unpackage(currentTime)
+        self.animateModel()
 
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-            # Move model 0.05 unit on x-axis
-            currentTime = time.time() - timeStart
-            if currentTime < 5:
-                PackageModel().unpackage(currentTime)
-                self.animateModel()
-            else:
-                isFinished = True
-                PackageModel().unpackage(currentTime)
-                self.animateModel()
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
-            glDisable(GL_COLOR_MATERIAL)
-            skybox.ground()
-            pygame.display.flip()
-            pygame.time.wait(40)
-
-        glDeleteTextures(texture_id)
-        return True
-
-    def package(self):
-        print("[VISUALISATION] Display painting process")
-        isFinished = False
-        timeStart = time.time()
-        skybox = Skybox()
-        texture_id = skybox.loadTexture()
-
-        # drawing loop
-        while not isFinished:
-            # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        quit()
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-            # Move model 0.05 unit on x-axis
-            currentTime = time.time() - timeStart
-            if currentTime < 5:
-                PackageModel().package(currentTime)
-                self.animateModel()
-            else:
-                isFinished = True
-                PackageModel().package(currentTime)
-                self.animateModel()
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
-            glDisable(GL_COLOR_MATERIAL)
-            skybox.ground()
-            pygame.display.flip()
-            pygame.time.wait(40)
-
-        glDeleteTextures(texture_id)
-        self.model.setPackaged(True)
-        return True
+    def package(self, currentTime):
+        PackageModel().package(currentTime)
+        self.animateModel()
 
     """
     utils
@@ -343,7 +222,7 @@ class Visualiser(object):
         glRotatef(60, 1, 0, 0)
         # enable gl features
         glEnable(GL_DEPTH_TEST)
-        #glClearColor(1.0, 1.0, 1.0, 0.0)
+        # glClearColor(1.0, 1.0, 1.0, 0.0)
         glShadeModel(GL_FLAT)
 
         glEnable(GL_BLEND)
@@ -356,6 +235,33 @@ class Visualiser(object):
         glLightfv(GL_LIGHT0, GL_DIFFUSE, (2, 2, 2, 1))
         glLight(GL_LIGHT0, GL_POSITION, (0, .5, 1))
         glEnable(GL_COLOR_MATERIAL)
+
+    def _enableGLFeatures(self, isEnabled):
+        if isEnabled:
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glEnable(GL_LIGHTING)
+            glEnable(GL_LIGHT0)
+            glEnable(GL_COLOR_MATERIAL)
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+        elif not isEnabled:
+            glDisable(GL_LIGHT0)
+            glDisable(GL_LIGHTING)
+            glDisable(GL_COLOR_MATERIAL)
+
+    def _eventLoop(self, texture_id):
+        # check events for closing
+        for event in pygame.event.get():
+            # Quit event (pressing close button on window)
+            if event.type == pygame.QUIT:
+                glDeleteTextures(texture_id)
+                pygame.quit()
+                quit()
+            # escape pressed
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    glDeleteTextures(texture_id)
+                    pygame.quit()
+                    quit()
 
     """
     Setter for state parameter

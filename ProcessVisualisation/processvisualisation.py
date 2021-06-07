@@ -42,7 +42,7 @@ class ProcessVisualisation(object):
         self.updateOrder()
         if not pygame.get_init():
             visualiser.initPygame()
-            visualiser.displayIdle()
+            # visualiser.displayIdle()
         visualiser.killVisualiser()
         time.sleep(0.1)
         visualiser.reviveVisualiser()
