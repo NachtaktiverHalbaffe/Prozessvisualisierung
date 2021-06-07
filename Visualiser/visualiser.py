@@ -13,8 +13,9 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from skyboy import Skybox
-from package import PackageModel
+from .skyboy import Skybox
+from .package import PackageModel
+from .iaslogo import IASModel
 import time
 import sys
 sys.path.append('.')
@@ -35,7 +36,6 @@ class Visualiser(object):
         self.paintColor = "#00fcef"
         self.color = '#CCCCCC'
         self.task = 'color'
-        self._initPygame()
 
     """
     Animations
@@ -46,32 +46,31 @@ class Visualiser(object):
         skybox = Skybox()
         texture_id = skybox.loadTexture()
 
-        while not self.isKilled:
-            # check user closed the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        quit()
-            if self.isKilled:
+        # check user closed the game
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                glDeleteTextures(texture_id)
                 pygame.quit()
                 quit()
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-            skybox.ground()
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
-            glDisable(GL_COLOR_MATERIAL)
-            pygame.display.flip()
-            pygame.time.wait(40)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    glDeleteTextures(texture_id)
+                    pygame.quit()
+                    quit()
+        if self.isKilled:
+            glDeleteTextures(texture_id)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glEnable(GL_LIGHTING)
+        glEnable(GL_LIGHT0)
+        glEnable(GL_COLOR_MATERIAL)
+        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+        skybox.ground()
+        glDisable(GL_LIGHT0)
+        glDisable(GL_LIGHTING)
+        glDisable(GL_COLOR_MATERIAL)
+        pygame.display.flip()
+        pygame.time.wait(40)
 
-        glDeleteTextures(texture_id)
         return True
 
     def displayIncomingCarrier(self):
@@ -80,21 +79,21 @@ class Visualiser(object):
         texture_id = skybox.loadTexture()
         hasReachedTarget = False
         self.loadModel()
-
         # drawing loop
         while not hasReachedTarget:
             # check user closed the game
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    glDeleteTextures(texture_id)
                     pygame.quit()
                     quit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
+                        glDeleteTextures(texture_id)
                         pygame.quit()
                         quit()
             if self.isKilled:
-                pygame.quit()
-                quit()
+                glDeleteTextures(texture_id)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -137,10 +136,6 @@ class Visualiser(object):
                         pygame.quit()
                         quit()
             # check if visualiser is killed
-            if self.isKilled:
-                pygame.quit()
-                quit()
-
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -200,9 +195,6 @@ class Visualiser(object):
                         quit()
 
             # check if visualiser is killed
-            if self.isKilled:
-                pygame.quit()
-                quit()
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
@@ -249,11 +241,6 @@ class Visualiser(object):
                         pygame.quit()
                         quit()
 
-             # check if visualiser is killed
-            if self.isKilled:
-                pygame.quit()
-                quit()
-
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -296,10 +283,6 @@ class Visualiser(object):
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         quit()
-             # check if visualiser is killed
-            if self.isKilled:
-                pygame.quit()
-                quit()
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_LIGHTING)
@@ -393,6 +376,9 @@ class Visualiser(object):
     def setModelName(self, name):
         self.modelName = name
 
+    def setTask(self, task):
+        self.task = task
+
     def killVisualiser(self):
         self.isKilled = True
 
@@ -402,7 +388,7 @@ class Visualiser(object):
 
 if __name__ == "__main__":
     # testcode to run
-    from iaslogo import IASModel
+    from .iaslogo import IASModel
     visualiser = Visualiser()
     visualiser.displayIncomingCarrier()
     input("Continue")

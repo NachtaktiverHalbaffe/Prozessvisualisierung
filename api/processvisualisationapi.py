@@ -11,14 +11,18 @@ Short description: Module for providing the REST Interface
 from flask_restful import Resource, reqparse, fields, marshal_with, abort
 import socket
 import sys
+import os
 import requests
+from threading import Thread
 sys.path.append('.')
 sys.path.append('..')
 
 from models import *  # nopep8
 from resources import *  # nopep8
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8
-from settings import db, app, api, IP_MES  # nopep8
+from visualiser.visualiser import Visualiser  # nopep8
+from settings import db, app, api  # nopep8
+from constants import IP_MES  # nopep8
 
 api.add_resource(APIOverview, '/api')
 api.add_resource(StateUnit, '/api/StateUnit')
@@ -45,7 +49,8 @@ if __name__ == "__main__":
         state.baseLevelHeight = CarrierDetection().calibrate()
     db.session.add(state)
     db.session.commit()
-    # TODO send initial request to mes
+
+    # send initial state to mes
     if VisualisationTaskModel.query.filter_by(id=1).first():
         assignedTask = VisualisationTaskModel.query.filter_by(
             id=1).first().task
@@ -58,14 +63,21 @@ if __name__ == "__main__":
         "baseLevelHeight": state.baseLevelHeight,
         "assignedTask": assignedTask,
     }
-    request = requests.post(
-        IP_MES+":8000/api/StateVisualisationUnit/", data=data)
-    if not request.ok:
-        # already exists => update it
-        request = requests.patch(
-            IP_MES+":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
+    # send request to mes
+    try:
+        request = requests.post(
+            IP_MES+":8000/api/StateVisualisationUnit/", data=data)
         if not request.ok:
-            # error
-            pass
+            # already exists => update it
+            request = requests.patch(
+                IP_MES+":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
+            if not request.ok:
+                # error
+                pass
+    except Exception as e:
+        print(e)
+
+    cwd = os.getcwd()
+    # os.chdir(cwd+"/api/")
     # ! In production change debug to false
     app.run(debug=True)

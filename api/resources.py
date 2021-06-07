@@ -8,7 +8,9 @@ Short description: resources for flask api
 """
 from api.models import StateWorkingPieceModel
 from models import *
-from settings import IP_MES, processVisualisation, processVisualisation_thread
+from settings import visualiser, db
+from constants import IP_MES
+from processvisualisation.processvisualisation import ProcessVisualisation
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
 from multiprocessing import Process
 import requests
@@ -103,29 +105,35 @@ class VisualisationTask(Resource):
         db.session.commit()
 
         # get StateWorkingPiece
-        request = requests.get(
-            IP_MES + ":8000/api/StateWorkingPiece/" + str(task.assignedWorkingPiece))
-        if request.ok:
-            data = request.json()
-            stateWorkingPiece = StateWorkingPieceModel(
-                id=1,
-                pieceID=data["id"],
-                color=data["color"],
-                isAssembled=data["isAssembled"],
-                isPackaged=data["isPackaged"],
-                model=data["model"]
-            )
-            if StateWorkingPieceModel.query.filter_by(id=1).count() == 1:
-                db.session.delete(
-                    StateWorkingPieceModel.query.filter_by(id=1).first())
-            db.session.add(stateWorkingPiece)
-            db.session.commit()
+        try:
+            request = requests.get(
+                IP_MES + ":8000/api/StateWorkingPiece/" + str(task.assignedWorkingPiece))
+            if request.ok:
+                data = request.json()
+                stateWorkingPiece = StateWorkingPieceModel(
+                    id=1,
+                    pieceID=data["id"],
+                    color=data["color"],
+                    isAssembled=data["isAssembled"],
+                    isPackaged=data["isPackaged"],
+                    model=data["model"]
+                )
+                if StateWorkingPieceModel.query.filter_by(id=1).count() == 1:
+                    db.session.delete(
+                        StateWorkingPieceModel.query.filter_by(id=1).first())
+                db.session.add(stateWorkingPiece)
+                db.session.commit()
+        except Exception as e:
+            print(e)
 
         # start visualisation task
 
         try:
-            processVisualisation.reviveVisualiser()
-            processVisualisation_thread.start()
+            visualiser.killVisualiser()
+            visualiser.reviveVisualiser()
+            pv = ProcessVisualisation(db)
+            pvThread = Thread(target=pv.executeOrder)
+            pvThread.start()
         except Exception as e:
             print(e)
         # processVisualisation.executeOrder()
@@ -152,16 +160,19 @@ class VisualisationTask(Resource):
             "assignedTask": "None",
         }
         # inform mes and quit processvisualisation
-        processVisualisation.killVisualiser()
-        request = requests.post(
-            IP_MES+":8000/api/StateVisualisationUnit/", data=data)
-        if not request.ok:
-            # already exists => update it
-            request = requests.patch(
-                IP_MES+":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
+        visualiser.killVisualiser()
+        try:
+            request = requests.post(
+                IP_MES+":8000/api/StateVisualisationUnit/", data=data)
             if not request.ok:
-                # error
-                pass
+                # already exists => update it
+                request = requests.patch(
+                    IP_MES+":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
+                if not request.ok:
+                    # error
+                    pass
+        except Exception as e:
+            print(e)
         return "", 204
 
     @marshal_with(resourceFields)

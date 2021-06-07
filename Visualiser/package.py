@@ -6,13 +6,15 @@ Short description: model object of package
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
-from model import Model
+from .model import Model
 import pygame
 import pywavefront
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from api.constants import CWP_DIR
 import time
+import os
 import sys
 sys.path.append('.')
 sys.path.append('..')
@@ -26,17 +28,18 @@ class PackageModel(Model):
         self.color = '#cd853f'
         self.paintColor = '#000000'
         self.alpha = 1
+        cwd = CWP_DIR
         # self.modelNames = [
-        #     '3dmodels/PACKAGE_BOTTOM_FINAL.obj',
-        #     '3dmodels/PACKAGE_LEFT_SIDE_FINAL.obj',
-        #     '3dmodels/PACKAGE_TOP_SIDE_FINAL.obj',
-        #     '3dmodels/PACKAGE_RIGHT_SIDE_FINAL.obj',
-        #     '3dmodels/PACKAGE_BOTTOM_SIDE_FINAL.obj',
-        #     '3dmodels/PACKAGE_TOP_FINAL.obj',
+        #    cwd+ '/visualiser/3dmodels/PACKAGE_BOTTOM_FINAL.obj',
+        #    cwd+ '/visualiser/3dmodels/PACKAGE_LEFT_SIDE_FINAL.obj',
+        #    cwd+ '/visualiser/3dmodels/PACKAGE_TOP_SIDE_FINAL.obj',
+        #    cwd+ '/visualiser/3dmodels/PACKAGE_RIGHT_SIDE_FINAL.obj',
+        #    cwd+ '/visualiser/3dmodels/PACKAGE_BOTTOM_SIDE_FINAL.obj',
+        #    cwd+ '/visualiser/3dmodels/PACKAGE_TOP_FINAL.obj',
         # ]
         self.modelNames = [
-            '3dmodels/PACKAGE_TOP_FINAL.obj',
-            '3dmodels/PACKAGE_BOX_FINAL.obj'
+            cwd+'/visualiser/3dmodels/PACKAGE_TOP_FINAL.obj',
+            cwd+'/visualiser/3dmodels/PACKAGE_BOX_FINAL.obj'
         ]
         self.scaledSize = 7
         self.models = []

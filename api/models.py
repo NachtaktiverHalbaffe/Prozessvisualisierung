@@ -11,8 +11,7 @@ Short description: data models
 import sys
 sys.path.append('.')
 sys.path.append('..')
-from settings import db, processVisualisation  # nopep8
-processVisualisation = processVisualisation
+from settings import db  # nopep8
 
 
 class VisualisationTaskModel(db.Model):

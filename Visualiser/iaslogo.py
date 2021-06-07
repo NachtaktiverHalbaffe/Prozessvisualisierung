@@ -11,11 +11,13 @@ import pywavefront
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from skyboy import Skybox
+from .skyboy import Skybox
 import time
+import os
 
-from model import Model
-from package import PackageModel
+from .model import Model
+from .package import PackageModel
+from api.constants import CWP_DIR
 
 
 class IASModel(Model):
@@ -26,10 +28,13 @@ class IASModel(Model):
         self.color = '#CCCCCC'
         self.paintColor = '#000000'
         self.alpha = 1
+        # os.chdir("..")
+        cwd = CWP_DIR
+        print(cwd)
         self.modelNames = [
-            '3dmodels/IAS_Letter_I_FINAL.obj',
-            '3dmodels/IAS_Letter_A_FINAL.obj',
-            '3dmodels/IAS_Letter_S_FINAL.obj'
+            cwd + '/visualiser/3dmodels/IAS_Letter_I_FINAL.obj',
+            cwd + '/visualiser/3dmodels/IAS_Letter_A_FINAL.obj',
+            cwd + '/visualiser/3dmodels/IAS_Letter_S_FINAL.obj'
         ]
         self.scaledSize = 4
         self.models = []

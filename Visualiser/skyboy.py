@@ -9,6 +9,11 @@ Short description: Skybox model
 import pygame
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from api.constants import CWP_DIR
+import os
+import sys
+sys.path.append('.')
+sys.path.append('..')
 
 
 class Skybox(object):
@@ -51,8 +56,7 @@ class Skybox(object):
         glDisable(GL_COLOR_MATERIAL)
 
     def loadTexture(self):
-        PATH_TEXTURE = '3dmodels/tex.jpg'
-
+        PATH_TEXTURE = CWP_DIR + '/visualiser/3dmodels/tex.jpg'
         # getting params
         image = pygame.image.load(PATH_TEXTURE)
         data = pygame.image.tostring(image, 'RGB', True)
