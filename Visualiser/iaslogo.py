@@ -11,6 +11,7 @@ import pywavefront
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from skyboy import Skybox
 import time
 
 from model import Model
@@ -57,7 +58,7 @@ class IASModel(Model):
                     glEnable(GL_COLOR_MATERIAL)
                     glColor3d(
                         self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                    self._drawModel(self.models[i])
+                    self._drawModel(self.models[i], self.staticColor)
                     glDisable(GL_COLOR_MATERIAL)
                     glPopMatrix()
                 elif i == 1:
@@ -75,15 +76,16 @@ class IASModel(Model):
                     if self.paintColor == '#000000':
                         glColor3d(colorRGB[0], colorRGB[1],
                                   colorRGB[2])
+                        self._drawModel(self.models[i], colorRGB)
                     else:
                         colorRGB = tuple(
                             float(colorRGB[i] * 1-self.alpha) for i in range(len(colorRGB)))
                         paintColorRGB = tuple(
                             float(paintColorRGB[i] * self.alpha) for i in range(len(paintColorRGB)))
-                        print(paintColorRGB)
-                        glColor3d(colorRGB[0] + paintColorRGB[0], colorRGB[1] + paintColorRGB[1],
-                                  colorRGB[2] + paintColorRGB[2])
-                    self._drawModel(self.models[i])
+                        color = []
+                        for j in range(len(colorRGB)):
+                            color.append(colorRGB[j] + paintColorRGB[j])
+                        self._drawModel(self.models[i], color)
                     glDisable(GL_COLOR_MATERIAL)
                     glPopMatrix()
                 elif i == 2:
@@ -98,7 +100,7 @@ class IASModel(Model):
                     # coloring
                     glColor3d(
                         self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                    self._drawModel(self.models[i])
+                    self._drawModel(self.models[i], self.staticColor)
                     glDisable(GL_COLOR_MATERIAL)
                     glPopMatrix()
         else:
@@ -108,8 +110,12 @@ class IASModel(Model):
     # animate the assemble task
     def assemble(self):
         print("[VISUALISATION] Assemble working Piece")
+        skybox = Skybox()
+        texture_id = skybox.loadTexture()
         hasFinished = False
         timeStart = time.time()
+
+        # drawing loop
         while not hasFinished:
             # check user closed the game
             for event in pygame.event.get():
@@ -132,16 +138,22 @@ class IASModel(Model):
             else:
                 hasFinished = True
                 self._animationAssemble(currentTime)
+            skybox.ground()
             pygame.display.flip()
             pygame.time.wait(40)
         self.isAssembled = True
+        glDeleteTextures(texture_id)
         return True
 
     # animates the generic task
     def generic(self):
         print("[VISUALISATION] Generic Task: Check working Piece")
+        skybox = Skybox()
+        texture_id = skybox.loadTexture()
         hasFinished = False
         timeStart = time.time()
+
+        # drawing loop
         while not hasFinished:
             # check user closed the game
             for event in pygame.event.get():
@@ -164,12 +176,13 @@ class IASModel(Model):
             else:
                 hasFinished = True
                 self._animationAssemble(currentTime)
-
+            skybox.ground()
             glDisable(GL_LIGHT0)
             glDisable(GL_LIGHTING)
             glDisable(GL_COLOR_MATERIAL)
             pygame.display.flip()
             pygame.time.wait(40)
+        glDeleteTextures(texture_id)
         return True
 
     def _animationAssemble(self, time):
@@ -182,9 +195,7 @@ class IASModel(Model):
                 glScaled(0.75, 0.75, 0.75)
                 # coloring
                 glEnable(GL_COLOR_MATERIAL)
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
             elif i == 1:
@@ -197,8 +208,7 @@ class IASModel(Model):
                     colorRGB = self._hexToRGB(self.color)
                 else:
                     colorRGB = (1, 1, 1)
-                glColor3d(colorRGB[0], colorRGB[1], colorRGB[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], colorRGB)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
             elif i == 2:
@@ -207,10 +217,7 @@ class IASModel(Model):
                 glTranslated(2-0.3*time, 0, -0.3)
                 glRotated(90, 0, 1, 0)
                 glEnable(GL_COLOR_MATERIAL)
-                # coloring
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
 

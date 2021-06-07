@@ -146,9 +146,7 @@ class PackageModel(Model):
                 glScaled(1.1, 0.5, 1.45)
                 # coloring
                 glEnable(GL_COLOR_MATERIAL)
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
             if i == 1:
@@ -158,10 +156,7 @@ class PackageModel(Model):
                 glScaled(1.1, 0.4, 1.5)
                 # coloring depending if piece was painted or not
                 glEnable(GL_COLOR_MATERIAL)
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
-
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
 
@@ -178,9 +173,7 @@ class PackageModel(Model):
                 glRotated(18 * time, 1, 0, 0)
                 # coloring
                 glEnable(GL_COLOR_MATERIAL)
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
             if i == 1:
@@ -190,9 +183,7 @@ class PackageModel(Model):
                 glScaled(1.1, 0.08 * time, 1.5)
                 # coloring depending if piece was painted or not
                 glEnable(GL_COLOR_MATERIAL)
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
         return True
@@ -208,10 +199,8 @@ class PackageModel(Model):
                 glRotated(18 * time, -1, 0, 0)
                 # coloring
                 glEnable(GL_COLOR_MATERIAL)
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
                 if time < 5:
-                    self._drawModel(self.models[i])
+                    self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
             if i == 1:
@@ -221,10 +210,8 @@ class PackageModel(Model):
                 glScaled(1.1, 0.38 - 0.08 * time, 1.5)
                 # coloring depending if piece was painted or not
                 glEnable(GL_COLOR_MATERIAL)
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
                 if time < 5:
-                    self._drawModel(self.models[i])
+                    self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
         return True

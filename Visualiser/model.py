@@ -49,7 +49,7 @@ class Model(object):
     """
     # This Methods gets model data and creates a 3D model
 
-    def _drawModel(self, model):
+    def _drawModel(self, model, color):
         # calculating parameter
         scene_box = (model.vertices[0], model.vertices[0])
         for vertex in model.vertices:
@@ -66,11 +66,14 @@ class Model(object):
         glScalef(*scene_scale)
         # draw Model
         for mesh in model.mesh_list:
+            glEnable(GL_COLOR_MATERIAL)
             glBegin(GL_TRIANGLES)
             for face in mesh.faces:
                 for vertex_i in face:
                     glVertex3f(*model.vertices[vertex_i])
+                    glColor3fv(color)
             glEnd()
+            glDisable(GL_COLOR_MATERIAL)
         glPopMatrix()
 
     def _hexToRGB(self, hex):
