@@ -19,8 +19,7 @@ sys.path.append('..')
 
 from models import *  # nopep8
 from resources import *  # nopep8
-from carrierdetection.carrierdetection import CarrierDetection  # nopep8
-from visualiser.visualiser import Visualiser  # nopep8
+from carrierdetection.carrierdetection import CarrierDetection  # nopep8 # nopep8
 from settings import db, app, api  # nopep8
 from constants import IP_MES  # nopep8
 
@@ -77,7 +76,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
 
-    cwd = os.getcwd()
-    # os.chdir(cwd+"/api/")
     # ! In production change debug to false
     app.run(debug=True)

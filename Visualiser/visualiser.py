@@ -45,31 +45,31 @@ class Visualiser(object):
         print("[VISUALISATION] Display idle")
         skybox = Skybox()
         texture_id = skybox.loadTexture()
-
-        # check user closed the game
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                glDeleteTextures(texture_id)
-                pygame.quit()
-                quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+        while not self.isKilled:
+            # check user closed the game
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     glDeleteTextures(texture_id)
                     pygame.quit()
                     quit()
-        if self.isKilled:
-            glDeleteTextures(texture_id)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glEnable(GL_LIGHTING)
-        glEnable(GL_LIGHT0)
-        glEnable(GL_COLOR_MATERIAL)
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-        skybox.ground()
-        glDisable(GL_LIGHT0)
-        glDisable(GL_LIGHTING)
-        glDisable(GL_COLOR_MATERIAL)
-        pygame.display.flip()
-        pygame.time.wait(40)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        glDeleteTextures(texture_id)
+                        pygame.quit()
+                        quit()
+            if self.isKilled:
+                glDeleteTextures(texture_id)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glEnable(GL_LIGHTING)
+            glEnable(GL_LIGHT0)
+            glEnable(GL_COLOR_MATERIAL)
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+            skybox.ground()
+            glDisable(GL_LIGHT0)
+            glDisable(GL_LIGHTING)
+            glDisable(GL_COLOR_MATERIAL)
+            pygame.display.flip()
+            pygame.time.wait(40)
 
         return True
 
@@ -334,7 +334,7 @@ class Visualiser(object):
             self.model.animateModel()
         return
 
-    def _initPygame(self):
+    def initPygame(self):
         pygame.init()
         pygame.display.set_mode(self.display, DOUBLEBUF | OPENGL)
         # set camera perspektive

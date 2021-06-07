@@ -37,16 +37,20 @@ class ProcessVisualisation(object):
     def executeOrder(self):
         from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         from api.settings import visualiser
+
         # get parameter for task and setup visualiser
         self.updateOrder()
         if not pygame.get_init():
-            visualiser._initPygame()
+            visualiser.initPygame()
+            visualiser.displayIdle()
+        visualiser.killVisualiser()
+        time.sleep(0.1)
         visualiser.reviveVisualiser()
-        visualiser.displayIdle()
 
         # wait for carrier
         self._updateStateWorkingPiece()
         self._updateState("waiting")
+        # visualiser.displayIdle()
         if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
             self._updateState("playing")
             visualiser.displayIncomingCarrier()
@@ -58,8 +62,6 @@ class ProcessVisualisation(object):
         self._updateStateWorkingPiece()
         visualiser.displayProcessVisualisation()
         self._updateState("finished")
-        # display process
-        visualiser.killVisualiser()
 
         # update parameter if task is finished
         workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
