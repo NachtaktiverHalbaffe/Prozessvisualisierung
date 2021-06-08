@@ -32,7 +32,7 @@ api.add_resource(StateWorkingPiece, '/api/StateWorkingPiece')
 
 if __name__ == "__main__":
     # update or create state at startup
-    # db.create_all()
+    db.create_all()
 
     state = StateModel.query.filter_by(id=1).first()
     if not state:
