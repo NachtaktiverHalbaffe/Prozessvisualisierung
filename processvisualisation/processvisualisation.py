@@ -51,12 +51,12 @@ class ProcessVisualisation(object):
         self._updateStateWorkingPiece()
         self._updateState("waiting")
         # visualiser.displayIdle()
-        if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
-            self._updateState("playing")
-            visualiser.displayIncomingCarrier()
-        else:
-            # TODO error
-            pass
+        #if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
+        self._updateState("playing")
+        visualiser.displayIncomingCarrier()
+        #else:
+        #    # TODO error
+         #   pass
 
         # display process
         self._updateStateWorkingPiece()
@@ -97,11 +97,11 @@ class ProcessVisualisation(object):
         # display outgoing carrier
         self._updateStateWorkingPiece()
         self._updateState("finished")
-        if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
-            visualiser.displayOutgoingCarrier()
-        else:
-            # TODO error
-            pass
+        #if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
+        visualiser.displayOutgoingCarrier()
+        #else:
+         #   # TODO error
+         #   pass
 
         self._updateState("idle")
         task = VisualisationTaskModel.query.filter_by(id=1).first()
