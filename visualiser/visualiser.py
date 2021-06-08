@@ -29,7 +29,7 @@ class Visualiser(object):
         self.modelName = 'IAS-Logo'
         self.model = None
         # resolution to render
-        self.display = (1280, 720)
+        self.display = (1920, 1080)
         # visualisation params
         self.isAssemled = True
         self.isPackaged = False
@@ -53,7 +53,6 @@ class Visualiser(object):
             if self.isKilled:
                 glDeleteTextures(texture_id)
                 break
-
             self._enableGLFeatures(True)
             skybox.ground()
             self._enableGLFeatures(False)

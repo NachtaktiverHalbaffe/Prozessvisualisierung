@@ -39,20 +39,25 @@ class ProcessVisualisation(object):
         from api.settings import visualiser
 
         # get parameter for task and setup visualiser
+        print("[PROCESSVISUALISATION] Visualisation startet.")
+        displayIdleThread = Thread(target= self._idleAnimation)
+
         self.updateOrder()
+        pygame.quit()
         if not pygame.get_init():
             visualiser.initPygame()
-            # visualiser.displayIdle()
-        visualiser.killVisualiser()
-        time.sleep(0.1)
         visualiser.reviveVisualiser()
 
         # wait for carrier
         self._updateStateWorkingPiece()
         self._updateState("waiting")
-        # visualiser.displayIdle()
+        displayIdleThread.start()
         if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
             self._updateState("playing")
+            visualiser.killVisualiser()
+            time.sleep(0.1)
+            visualiser.reviveVisualiser()
+            print("[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
             visualiser.displayIncomingCarrier()
         else:
             # TODO error
@@ -100,7 +105,7 @@ class ProcessVisualisation(object):
         if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
             visualiser.displayOutgoingCarrier()
         else:
-            # TODO error
+           # TODO error
             pass
 
         self._updateState("idle")
@@ -111,7 +116,10 @@ class ProcessVisualisation(object):
         self.db.session.delete(workingPiece)
         self.db.session.commit()
 
-        visualiser.displayIdle()
+        visualiser.reviveVisualiser()
+        displayIdleThread = Thread(target= self._idleAnimation)
+        displayIdleThread.start()
+        print("[PROCESSVISUALISATION] Carrier leaved the unit. Visualisation ended.")
 
     def updateOrder(self):
         from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
@@ -123,11 +131,18 @@ class ProcessVisualisation(object):
         self.paintColor = task.paintColor
 
         # update state of workingpiece
-        workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
-        self.model = workingPiece.model
-        self.isAssemled = workingPiece.isAssembled
-        self.isPackaged = workingPiece.isPackaged
-        self.color = workingPiece.color
+        workingPiece = StateWorkingPieceModel.query.filter_by(id=1)
+        if workingPiece.count() ==1:
+            workingPiece= workingPiece.first()
+            self.model = workingPiece.model
+            self.isAssemled = workingPiece.isAssembled
+            self.isPackaged = workingPiece.isPackaged
+            self.color = workingPiece.color
+        else:
+            self.model = "IAS-Logo"
+            self.isAssemled = False
+            self.isPackaged = False
+            self.color = "#000000"
 
         state = StateModel.query.filter_by(id=1).first()
         self.baseLevelHeight = state.baseLevelHeight
@@ -162,3 +177,8 @@ class ProcessVisualisation(object):
                 pass
         except Exception as e:
             print(e)
+
+    def _idleAnimation(self):
+        from api.settings import visualiser
+
+        visualiser.displayIdle()

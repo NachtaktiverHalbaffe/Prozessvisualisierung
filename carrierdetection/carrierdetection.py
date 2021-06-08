@@ -32,29 +32,35 @@ class CarrierDetection(object):
         else:
             return 0
 
-    def detectCarrier(self, expected, baseLevelHeight):
+    def detectCarrier(self, exspected, baseLevelHeight):
         isExpected = False
 
         while True:
             distanceEntrance = self._measureEntrance()
-            time.sleep(0.5)
+            time.sleep(0.2)
             distanceExit = self._measureExit()
-            time.sleep(0.5)
+            time.sleep(0.2)
 
-            if expected == 'entrance':
-                if baseLevelHeight - distanceExit > 4:
+            if exspected == 'entrance':
+                if baseLevelHeight - distanceExit > 10:
                     isExpected = False
                     break
-                if baseLevelHeight - distanceEntrance > 4:
+                if baseLevelHeight - distanceEntrance > 10:
                     isExpected = True
                     break
-            elif expected == 'exit':
-                if baseLevelHeight - distanceEntrance > 4:
+            elif exspected == 'exit':
+                if baseLevelHeight - distanceEntrance > 10:
                     isExpected = False
                     break
-                if baseLevelHeight - distanceExit > 4:
+                if baseLevelHeight - distanceExit > 10:
                     isExpected = True
                     break
+            elif exspected == 'both':
+                if baseLevelHeight - distanceEntrance > 10 or baseLevelHeight - distanceExit > 10:
+                    isExpected = True
+                    break
+
+        # GPIO.cleanup()
         return isExpected
 
     def _measureEntrance(self):
@@ -64,9 +70,9 @@ class CarrierDetection(object):
             #GPIO.output(self.GPIO_TRIGGER_1, False)
             time_start = time.time()
             time_end = time.time()
-            # while GPIO.input(self.GPIO_ECHO_1) == 0:
+            # while GPIO.input(self.GPIO_ECHO_1) == False:
             #     time_start = time.time()
-            # while GPIO.input(self.GPIO_ECHO_1) == 1:
+            # while GPIO.input(self.GPIO_ECHO_1) == True:
             #     time_end = time.time()
             # the measured distance is output in cm
             # distance = (delta_time * schallgeschw.)/ 2
@@ -82,9 +88,9 @@ class CarrierDetection(object):
             #GPIO.output(self.GPIO_TRIGGER_2, False)
             time_start = time.time()
             time_end = time.time()
-            # while GPIO.input(self.GPIO_ECHO_2) == 0:
+            # while GPIO.input(self.GPIO_ECHO_2) == False:
             #     time_start = time.time()
-            # while GPIO.input(self.GPIO_ECHO_2) == 1:
+            # while GPIO.input(self.GPIO_ECHO_2) == True:
             #     time_end = time.time()
             # the measured distance is output in cm
             # distance = (delta_time * schallgeschw.)/ 2

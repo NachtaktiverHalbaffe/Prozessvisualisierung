@@ -30,7 +30,6 @@ class IASModel(Model):
         self.alpha = 1
         # os.chdir("..")
         cwd = CWP_DIR
-        print(cwd)
         self.modelNames = [
             cwd + '/visualiser/3dmodels/IAS_Letter_I_FINAL.obj',
             cwd + '/visualiser/3dmodels/IAS_Letter_A_FINAL.obj',

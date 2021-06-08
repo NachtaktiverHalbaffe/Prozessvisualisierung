@@ -56,7 +56,7 @@ class Skybox(object):
         glDisable(GL_COLOR_MATERIAL)
 
     def loadTexture(self):
-        PATH_TEXTURE = CWP_DIR + '/visualiser/3dmodels/tex.jpg'
+        PATH_TEXTURE = CWP_DIR + '/visualiser/3dmodels/tex.bmp'
         # getting params
         image = pygame.image.load(PATH_TEXTURE)
         data = pygame.image.tostring(image, 'RGB', True)
