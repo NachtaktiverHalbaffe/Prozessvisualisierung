@@ -8,16 +8,21 @@ Short description: Module for detecting the carrier with ultrasonic sensor
 """
 import RPi.GPIO as GPIO
 import time
+from threading import Thread
 
 
 class CarrierDetection(object):
 
     def __init__(self):
-        self.GPIO_TRIGGER_1 = 23  # GPIO23
-        self.GPIO_TRIGGER_2 = 16  # GPIO4
-        self.GPIO_ECHO_1 = 24  # GPIO24
-        self.GPIO_ECHO_2 = 18  # GPIO4
-        GPIO.setmode(GPIO.BOARD)
+        self.distanceEntrance = 0.0
+        self.distanceExit = 0.0
+        self.baseLevel = 0.0
+        # setup sensors
+        self.GPIO_TRIGGER_1 = 23  # entrance
+        self.GPIO_TRIGGER_2 = 16  # exit
+        self.GPIO_ECHO_1 = 24  # entrance
+        self.GPIO_ECHO_2 = 18 # exit
+        GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         GPIO.setup(self.GPIO_TRIGGER_1, GPIO.OUT)
         GPIO.setup(self.GPIO_ECHO_1, GPIO.IN)
@@ -25,43 +30,57 @@ class CarrierDetection(object):
         GPIO.setup(self.GPIO_ECHO_2, GPIO.IN)
 
     def calibrate(self):
-        #distanceEntrance = self._measureEntrance()
-        #distanceExit = self._measureExit()
-        distanceEntrance= 0
-        distanceExit= 0
-        if abs(distanceEntrance - distanceExit) < 2:
-            return (distanceEntrance+distanceExit)/2
+        time.sleep(0.5)
+        self._measureExit()
+        time.sleep(0.5)
+        self._measureEntrance()
+        if abs(self.distanceEntrance - self.distanceExit) < 6:
+            GPIO.cleanup()
+            self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
+            # format baselevel to 2 decimal places
+            self.baseLevel = "{:.2f}".format(self.baseLevel)
+            return
         else:
-            return 0
+            GPIO.cleanup()
+            self.baseLevel = 0.0
+            return
 
     def detectCarrier(self, exspected, baseLevelHeight):
         isExpected = False
+        self.distanceEntrance = 0.0
+        self.distanceExit = 0.0
 
         while True:
-            distanceEntrance = self._measureEntrance()
             time.sleep(0.2)
-            distanceExit = self._measureExit()
+            self._measureEntrance()
             time.sleep(0.2)
-
+            self._measureExit()
+            
+            
             if exspected == 'entrance':
-                if baseLevelHeight - distanceExit > 10:
+                if baseLevelHeight - self.distanceExit > 10:
+                    print("[CARRIERDETECTION] Detected carrier on entrance")
                     isExpected = False
                     break
-                if baseLevelHeight - distanceEntrance > 10:
+                if baseLevelHeight - self.distanceEntrance > 10:
+                    print("[CARRIERDETECTION] Detected carrier on exit")
                     isExpected = True
                     break
             elif exspected == 'exit':
-                if baseLevelHeight - distanceEntrance > 10:
+                print(self.distanceExit)
+                if baseLevelHeight - self.distanceEntrance > 10:
+                    print("[CARRIERDETECTION] Detected carrier on entrance")
                     isExpected = False
                     break
-                if baseLevelHeight - distanceExit > 10:
+                if baseLevelHeight - self.distanceExit > 10:
                     isExpected = True
+                    print("[CARRIERDETECTION] Detected carrier on exit")
                     break
             elif exspected == 'both':
-                if baseLevelHeight - distanceEntrance > 10 or baseLevelHeight - distanceExit > 10:
+                if baseLevelHeight - self.distanceEntrance > 10 or baseLevelHeight - self.distanceExit > 10:
                     isExpected = True
+                    print("[CARRIERDETECTION] Detected carrier")
                     break
-
         GPIO.cleanup()
         return isExpected
 
@@ -69,28 +88,24 @@ class CarrierDetection(object):
         GPIO.output(self.GPIO_TRIGGER_1, True)
         time.sleep(0.00002)
         GPIO.output(self.GPIO_TRIGGER_1, False)
-        time_start = time.time()
-        time_end = time.time()
         while GPIO.input(self.GPIO_ECHO_1) == False:
             time_start = time.time()
         while GPIO.input(self.GPIO_ECHO_1) == True:
             time_end = time.time()
         # the measured distance is output in cm
         # distance = (delta_time * schallgeschw.)/ 2
-        return ((time_end - time_start) * 34300) / 2
+        self.distanceEntrance = ((time_end - time_start) * 34300) / 2
 
 
     def _measureExit(self):
         GPIO.output(self.GPIO_TRIGGER_2, True)
         time.sleep(0.00002)
         GPIO.output(self.GPIO_TRIGGER_2, False)
-        time_start = time.time()
-        time_end = time.time()
         while GPIO.input(self.GPIO_ECHO_2) == False:
             time_start = time.time()
         while GPIO.input(self.GPIO_ECHO_2) == True:
-                time_end = time.time()
+            time_end = time.time()
         # the measured distance is output in cm
         # distance = (delta_time * schallgeschw.)/ 2
-        return ((time_end - time_start) * 34300) / 2
+        self.distanceExit = ((time_end - time_start) * 34300) / 2
 
