@@ -7,6 +7,7 @@ Short description: resources for flask api
 
 """
 from api.models import StateWorkingPieceModel
+from mesrequests import getStateWorkingPiece
 from models import *
 from settings import visualiser, db
 from constants import IP_MES
@@ -105,29 +106,8 @@ class VisualisationTask(Resource):
         db.session.commit()
 
         # get StateWorkingPiece
-        try:
-            request = requests.get(
-                IP_MES + ":8000/api/StateWorkingPiece/" + str(task.assignedWorkingPiece))
-            if request.ok:
-                data = request.json()
-                stateWorkingPiece = StateWorkingPieceModel(
-                    id=1,
-                    pieceID=data["id"],
-                    color=data["color"],
-                    isAssembled=data["isAssembled"],
-                    isPackaged=data["isPackaged"],
-                    model=data["model"]
-                )
-                if StateWorkingPieceModel.query.filter_by(id=1).count() == 1:
-                    db.session.delete(
-                        StateWorkingPieceModel.query.filter_by(id=1).first())
-                db.session.add(stateWorkingPiece)
-                db.session.commit()
-        except Exception as e:
-            print(e)
-
+        getStateWorkingPiece(task.assignedWorkingPiece)
         # start visualisation task
-
         try:
             visualiser.killVisualiser()
             visualiser.reviveVisualiser()
@@ -136,7 +116,6 @@ class VisualisationTask(Resource):
             pvThread.start()
         except Exception as e:
             print(e)
-
         return task, 201
 
     def delete(self):

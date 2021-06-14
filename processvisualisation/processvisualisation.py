@@ -7,7 +7,7 @@ Short description: Module for handling processvisualisation
 
 """
 
-from logging import error
+from api.mesrequests import sendError
 from threading import Thread
 import pygame
 import time
@@ -69,13 +69,13 @@ class ProcessVisualisation(object):
                     # repeating carrierdetection
                     print(
                         "[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
-                    self._sendError(
+                    sendError(
                         msg="Detected Carrier in exit, but expected it on entrance. Resetting carrierdetection")
                 else:
                     # aborting visualisation task cause it detected too often the carrier on the exit
                     print(
                         "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
-                    self._sendError(
+                    sendError(
                         msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
                     self._cleanup()
                     return
@@ -104,13 +104,13 @@ class ProcessVisualisation(object):
                     # repeating carrierdetection
                     print(
                         "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
-                    self._sendError(
+                    sendError(
                         msg="Detected Carrier in entrance, but expected it on exit. Resetting carrierdetection")
                 else:
                     # aborting visualisation task cause it detected too often the carrier on the entrance
                     print(
                         "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
-                    self._sendError(
+                    sendError(
                         msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
                     self._cleanup()
                     return
@@ -229,22 +229,6 @@ class ProcessVisualisation(object):
                 print(request.status_code)
         except Exception as e:
             pass
-
-    # sends error to mes
-    def _sendError(self, msg, level="[WARNING]", category="Operational issue"):
-
-        data = {
-            "msg": msg,
-            "category": category,
-            "level": level,
-            "isSolved": True
-        }
-        try:
-            request = requests.post(IP_MES+":8000/api/Error/", data=data)
-            if not request.ok:
-                print(request.status_code)
-        except Exception as e:
-            print("[PROCESSVISUALISATION] Couldn't send error to MES. Check Connection")
 
     # cleanup local database
     def _cleanup(self):
