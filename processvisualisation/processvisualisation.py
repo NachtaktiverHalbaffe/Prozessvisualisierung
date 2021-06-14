@@ -35,80 +35,50 @@ class ProcessVisualisation(object):
         self.baseLevelHeight = 0.0
 
     def executeOrder(self):
-        from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
+        from api.models import StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         from api.settings import visualiser
 
         # get parameter for task and setup visualiser
         print("[PROCESSVISUALISATION] Visualisation startet.")
-        displayIdleThread = Thread(target= self._idleAnimation)
-
         self.updateOrder()
         pygame.quit()
         if not pygame.get_init():
             visualiser.initPygame()
         visualiser.reviveVisualiser()
-
         # wait for carrier
         self._updateStateWorkingPiece()
-        self._updateState("waiting")
-        displayIdleThread.start()
+        Thread(target=self._updateState, args=["waiting"]).start()
+        #while not pygame.get_init():
+        #    time.sleep(0.1)
+        #Thread(target= self._idleAnimation).start()
         if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
-            self._updateState("playing")
+            Thread(target=self._updateState, args= ["playing"]).start()
             visualiser.killVisualiser()
             time.sleep(0.1)
             visualiser.reviveVisualiser()
             print("[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
             visualiser.displayIncomingCarrier()
         else:
-            # TODO error
-            pass
+            print("[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
 
         # display process
-        self._updateStateWorkingPiece()
+        Thread(target=self._updateStateWorkingPiece).start()
         visualiser.displayProcessVisualisation()
-        self._updateState("finished")
+        Thread(target=self._updateState, args=["finished"]).start()
 
         # update parameter if task is finished
-        workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
-        if self.task == "color":
-            self.color = self.paintColor
-            workingPiece.color = self.color
-        elif self.task == "assemble":
-            self.isAssembled = True
-            workingPiece.isAssembled = self.isAssembled
-        elif self.task == "package":
-            self.isPackaged = True
-            workingPiece.isPackaged = self.isPackaged
-        elif self.task == "unpackage":
-            self.isPackaged == False
-            workingPiece.isPackaged = self.isPackaged
-        self.db.session.add(workingPiece)
-        self.db.session.commit()
-        # update stateworkingpiece in mes
-        data = {
-            "isPackaged": workingPiece.isPackaged,
-            "isAssembled": workingPiece.isAssembled,
-            "color": workingPiece.color,
-            "storageLocation": 0,
-        }
-        try:
-            request = requests.patch(
-                IP_MES + ":8000/api/StateWorkingPiece/" + str(workingPiece.pieceID), data=data)
-            if not request.ok:
-                print(request.status_code)
-        except Exception as e:
-            pass
+        Thread(target= self._updatePar).start()
 
         # display outgoing carrier
         self._updateStateWorkingPiece()
-        self._updateState("finished")
+        Thread(target= self._updateState, args=["finished"]).start()
         if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
             visualiser.displayOutgoingCarrier()
         else:
            # TODO error
             pass
 
-        self._updateState("idle")
+        Thread(target=self._updateState, args=["idle"]).start()
         task = VisualisationTaskModel.query.filter_by(id=1).first()
         self.db.session.delete(task)
         self.db.session.commit()
@@ -148,7 +118,6 @@ class ProcessVisualisation(object):
         self.baseLevelHeight = state.baseLevelHeight
 
     def _updateStateWorkingPiece(self):
-        from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         from api.settings import visualiser
 
         visualiser.setColor(self.color)
@@ -159,7 +128,7 @@ class ProcessVisualisation(object):
         visualiser.setTask(self.task)
 
     def _updateState(self, newState):
-        from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
+        from api.models import StateModel # nopep8
 
         state = StateModel.query.filter_by(id=1).first()
         state.state = newState
@@ -182,3 +151,35 @@ class ProcessVisualisation(object):
         from api.settings import visualiser
 
         visualiser.displayIdle()
+
+    def _updatePar(self):
+        from api.models import StateWorkingPieceModel # nopep8
+        workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
+        if self.task == "color":
+            self.color = self.paintColor
+            workingPiece.color = self.color
+        elif self.task == "assemble":
+            self.isAssembled = True
+            workingPiece.isAssembled = self.isAssembled
+        elif self.task == "package":
+            self.isPackaged = True
+            workingPiece.isPackaged = self.isPackaged
+        elif self.task == "unpackage":
+            self.isPackaged == False
+            workingPiece.isPackaged = self.isPackaged
+        self.db.session.add(workingPiece)
+        self.db.session.commit()
+        # update stateworkingpiece in mes
+        data = {
+            "isPackaged": workingPiece.isPackaged,
+            "isAssembled": workingPiece.isAssembled,
+            "color": workingPiece.color,
+            "storageLocation": 0,
+        }
+        try:
+            request = requests.patch(
+                IP_MES + ":8000/api/StateWorkingPiece/" + str(workingPiece.pieceID), data=data)
+            if not request.ok:
+                print(request.status_code)
+        except Exception as e:
+            pass
