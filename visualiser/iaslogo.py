@@ -77,19 +77,16 @@ class IASModel(Model):
                         colorRGB = (1, 1, 1)
                     if self.paintColor != '#000000':
                         paintColorRGB = self._hexToRGB(self.paintColor)
-                    if self.paintColor == '#000000':
-                        glColor3d(colorRGB[0], colorRGB[1],
-                                  colorRGB[2])
-                        self._drawModel(self.models[i], colorRGB)
-                    else:
                         colorRGB = tuple(
-                            float(colorRGB[i] * 1-self.alpha) for i in range(len(colorRGB)))
+                            float(colorRGB[i] * (1-self.alpha)) for i in range(len(colorRGB)))
                         paintColorRGB = tuple(
                             float(paintColorRGB[i] * self.alpha) for i in range(len(paintColorRGB)))
-                        color = []
-                        for j in range(len(colorRGB)):
-                            color.append(colorRGB[j] + paintColorRGB[j])
+                        color = tuple(abs(float(colorRGB[i]+ paintColorRGB[i])) for i in range(len(colorRGB)))
                         self._drawModel(self.models[i], color)
+                    elif self.paintColor == '#000000':
+                        glColor3d(colorRGB[0], colorRGB[1],
+                                  colorRGB[2])
+                        self._drawModel(self.models[i], colorRGB)  
                     glDisable(GL_COLOR_MATERIAL)
                     glPopMatrix()
                 elif i == 2:
