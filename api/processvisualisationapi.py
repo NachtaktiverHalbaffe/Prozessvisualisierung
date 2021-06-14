@@ -35,6 +35,7 @@ if __name__ == "__main__":
     # db.create_all()
     calibrater = CarrierDetection()
     calibrater.calibrate()
+
     state = StateModel.query.filter_by(id=1).first()
     if not state:
         state = StateModel(
