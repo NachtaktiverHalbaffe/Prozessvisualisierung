@@ -33,19 +33,20 @@ api.add_resource(StateWorkingPiece, '/api/StateWorkingPiece')
 if __name__ == "__main__":
     # update or create state at startup
     # db.create_all()
-
+    calibrater = CarrierDetection()
+    calibrater.calibrate()
     state = StateModel.query.filter_by(id=1).first()
     if not state:
         state = StateModel(
             id=1,
             ipAdress=socket.gethostbyname(socket.gethostname()),
-            baseLevelHeight=CarrierDetection().calibrate(),
+            baseLevelHeight=calibrater.baseLevel,
             boundToResourceID=0,
             state="idle")
     else:
         state.id = 1
         state.ipAdress = socket.gethostbyname(socket.gethostname())
-        state.baseLevelHeight = CarrierDetection().calibrate()
+        state.baseLevelHeight = calibrater.baseLevel
     db.session.add(state)
     db.session.commit()
 
