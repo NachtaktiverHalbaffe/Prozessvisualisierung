@@ -157,6 +157,7 @@ class Visualiser(object):
                     self.package(currentTime)
                     self.isPackaged = True
             elif self.task == 'unpackage':
+                self.setIsPackaged(False)
                 if currentTime < 5:
                     self.unpackage(currentTime)
                 else:
@@ -176,6 +177,7 @@ class Visualiser(object):
         return True
 
     def paint(self, currentTime):
+        self.model.paintColor = self.paintColor
         self.model.setAlpha(0.2 * currentTime)
         self.animateModel()
 
@@ -231,8 +233,8 @@ class Visualiser(object):
         glEnable(GL_LIGHTING)
         glLight(GL_LIGHT0, GL_POSITION,  (0, 1, -7, 0))
         glLightfv(GL_LIGHT0, GL_AMBIENT, (1, 1, 1, 1))
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, (2, 2, 2, 1))
-        glLight(GL_LIGHT0, GL_POSITION, (0, .5, 1))
+        #glLightfv(GL_LIGHT0, GL_DIFFUSE, (2, 2, 2, 1))
+        #glLight(GL_LIGHT0, GL_POSITION, (0, .5, 1))
         glEnable(GL_COLOR_MATERIAL)
 
     def _enableGLFeatures(self, isEnabled):
@@ -268,15 +270,23 @@ class Visualiser(object):
 
     def setIsAssembled(self, isAssembled):
         self.isAssemled = isAssembled
+        if self.model != None :
+            self.model.setAssembled(isAssembled)
 
     def setIsPackaged(self, isPackaged):
         self.isPackaged = isPackaged
+        if self.model != None :
+            self.model.setPackaged(isPackaged)
 
     def setColor(self, color):
         self.color = color
+        if self.model != None :
+            self.model.setColor(color)
 
     def setPaintColor(self, paintColor):
         self.paintColor = paintColor
+        if self.model != None :
+            self.model.setPaintColor(paintColor)
 
     def setModelName(self, name):
         self.modelName = name
