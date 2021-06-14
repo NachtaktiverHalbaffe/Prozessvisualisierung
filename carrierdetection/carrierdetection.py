@@ -30,10 +30,12 @@ class CarrierDetection(object):
         GPIO.setup(self.GPIO_ECHO_2, GPIO.IN)
 
     def calibrate(self):
-        time.sleep(0.5)
+        time.sleep(1)
         self._measureExit()
-        time.sleep(0.5)
+        time.sleep(1)
         self._measureEntrance()
+        print(self.distanceEntrance)
+        print(self.distanceExit)
         if abs(self.distanceEntrance - self.distanceExit) < 6:
             GPIO.cleanup()
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
@@ -55,7 +57,7 @@ class CarrierDetection(object):
             self._measureEntrance()
             time.sleep(0.2)
             self._measureExit()
-            
+           
             
             if exspected == 'entrance':
                 if baseLevelHeight - self.distanceExit > 10:
