@@ -10,7 +10,6 @@ Short description: Common http requests to or from the mes
 
 import requests
 from constants import IP_MES
-from models import StateWorkingPieceModel
 
 
 def sendError(msg, level="[WARNING]", category="Operational issue"):
@@ -30,6 +29,7 @@ def sendError(msg, level="[WARNING]", category="Operational issue"):
 
 
 def getStateWorkingPiece(id):
+    from models import StateWorkingPieceModel
     from settings import db
     try:
         request = requests.get(
@@ -51,3 +51,21 @@ def getStateWorkingPiece(id):
             db.session.commit()
     except Exception as e:
         print(e)
+
+def updateStateVisualisationUnit(id, data):
+    try:
+        request = requests.patch(
+            IP_MES + ":8000/api/StateVisualisationUnit/" + str(id), data=data)
+        if not request.ok:
+            print(request.status_code)
+    except Exception as e:
+            print(e)
+
+def updateStateWorkingPiece(id, data):
+    try:
+        request = requests.patch(
+            IP_MES + ":8000/api/StateWorkingPiece/" + str(id), data=data)
+        if not request.ok:
+            print(request.status_code)
+    except Exception as e:
+            print(e)

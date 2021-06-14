@@ -7,7 +7,7 @@ Short description: Module for handling processvisualisation
 
 """
 
-from api.mesrequests import sendError
+from api.mesrequests import sendError, getStateWorkingPiece, updateStateVisualisationUnit, updateStateWorkingPiece
 from threading import Thread
 import pygame
 import time
@@ -59,6 +59,8 @@ class ProcessVisualisation(object):
             if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
                 # display incoming carrier
                 Thread(target=self._updateState, args=["playing"]).start()
+                # update state of workingpiece
+                getStateWorkingPiece(self.assignedWorkingPiece)
                 print(
                     "[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
                 visualiser.displayIncomingCarrier()
@@ -83,6 +85,7 @@ class ProcessVisualisation(object):
         """
         process itself
         """
+        self.updateOrder()
         Thread(target=self._updateStateWorkingPiece).start()
         visualiser.displayProcessVisualisation()
         Thread(target=self._updateState, args=["finished"]).start()
@@ -182,13 +185,7 @@ class ProcessVisualisation(object):
             "state": newState,
             "assignedTask": task
         }
-        try:
-            request = requests.patch(
-                IP_MES + ":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
-            if not request.ok:
-                pass
-        except Exception as e:
-            print(e)
+        updateStateVisualisationUnit(state.boundToResourceID,data)
 
     def _idleAnimation(self):
         from api.settings import visualiser
@@ -222,13 +219,8 @@ class ProcessVisualisation(object):
             "color": workingPiece.color,
             "storageLocation": 0,
         }
-        try:
-            request = requests.patch(
-                IP_MES + ":8000/api/StateWorkingPiece/" + str(workingPiece.pieceID), data=data)
-            if not request.ok:
-                print(request.status_code)
-        except Exception as e:
-            pass
+        updateStateWorkingPiece(workingPiece.pieceID, data)
+
 
     # cleanup local database
     def _cleanup(self):
