@@ -48,31 +48,25 @@ class ProcessVisualisation(object):
         # wait for carrier
         self._updateStateWorkingPiece()
         Thread(target=self._updateState, args=["waiting"]).start()
-        #while not pygame.get_init():
-        #    time.sleep(0.1)
-        #Thread(target= self._idleAnimation).start()
+        visualiser.displayIdleStill()
         if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
             Thread(target=self._updateState, args= ["playing"]).start()
             visualiser.killVisualiser()
-            time.sleep(0.1)
+            time.sleep(1)
             visualiser.reviveVisualiser()
             print("[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
             visualiser.displayIncomingCarrier()
         else:
             print("[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
-
         # display process
         Thread(target=self._updateStateWorkingPiece).start()
         visualiser.displayProcessVisualisation()
         Thread(target=self._updateState, args=["finished"]).start()
 
         # update parameter if task is finished
-        #updateParThread = Thread(target= self._updatePar)
-        #updateParThread.start()
-        #updateParThread.join()
+        self._updatePar()
 
         # display outgoing carrier
-        self._updatePar()
         self._updateStateWorkingPiece()
         Thread(target= self._updateState, args=["finished"]).start()
         if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):

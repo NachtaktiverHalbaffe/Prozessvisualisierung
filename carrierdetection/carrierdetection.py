@@ -61,11 +61,11 @@ class CarrierDetection(object):
             
             if exspected == 'entrance':
                 if baseLevelHeight - self.distanceExit > 10:
-                    print("[CARRIERDETECTION] Detected carrier on entrance")
+                    print("[CARRIERDETECTION] Detected carrier on exit" )
                     isExpected = False
                     break
                 if baseLevelHeight - self.distanceEntrance > 10:
-                    print("[CARRIERDETECTION] Detected carrier on exit")
+                    print("[CARRIERDETECTION] Detected carrier on entrance")
                     isExpected = True
                     break
             elif exspected == 'exit':

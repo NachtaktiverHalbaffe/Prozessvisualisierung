@@ -45,7 +45,6 @@ class Visualiser(object):
         print("[VISUALISATION] Display idle")
         skybox = Skybox()
         texture_id = skybox.loadTexture()
-
         # drawing loop
         while not self.isKilled:
             # check user closed the game
@@ -57,7 +56,22 @@ class Visualiser(object):
             skybox.ground()
             self._enableGLFeatures(False)
             pygame.display.flip()
-            pygame.time.wait(40)
+            #pygame.time.wait(40)
+
+        return True
+    
+    def displayIdleStill(self):
+        print("[VISUALISATION] Display idle")
+        skybox = Skybox()
+        texture_id = skybox.loadTexture()
+
+        # check user closed the game
+        self._eventLoop(texture_id)
+        self._enableGLFeatures(True)
+        skybox.ground()
+        self._enableGLFeatures(False)
+        pygame.display.flip()
+        pygame.time.wait(40)
 
         return True
 
