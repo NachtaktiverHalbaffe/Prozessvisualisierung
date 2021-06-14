@@ -135,6 +135,7 @@ class VisualisationTask(Resource):
         }
         # inform mes and quit processvisualisation
         visualiser.killVisualiser()
+        # TODO abort processvisualisation
         updateStateVisualisationUnit(state.boundToResourceID, data)
         return "", 204
 
