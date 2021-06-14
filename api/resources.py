@@ -131,6 +131,7 @@ class VisualisationTask(Resource):
         db.session.commit()
 
         data = {
+            "state": state.state,
             "assignedTask": "None",
         }
         # inform mes and quit processvisualisation
