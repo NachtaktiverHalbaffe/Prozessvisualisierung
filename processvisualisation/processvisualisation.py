@@ -67,16 +67,18 @@ class ProcessVisualisation(object):
         Thread(target=self._updateState, args=["finished"]).start()
 
         # update parameter if task is finished
-        Thread(target= self._updatePar).start()
+        #updateParThread = Thread(target= self._updatePar)
+        #updateParThread.start()
+        #updateParThread.join()
 
         # display outgoing carrier
+        self._updatePar()
         self._updateStateWorkingPiece()
         Thread(target= self._updateState, args=["finished"]).start()
         if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
             visualiser.displayOutgoingCarrier()
         else:
-           # TODO error
-            pass
+           print("[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
 
         Thread(target=self._updateState, args=["idle"]).start()
         task = VisualisationTaskModel.query.filter_by(id=1).first()
@@ -165,7 +167,7 @@ class ProcessVisualisation(object):
             self.isPackaged = True
             workingPiece.isPackaged = self.isPackaged
         elif self.task == "unpackage":
-            self.isPackaged == False
+            self.isPackaged = False
             workingPiece.isPackaged = self.isPackaged
         self.db.session.add(workingPiece)
         self.db.session.commit()
