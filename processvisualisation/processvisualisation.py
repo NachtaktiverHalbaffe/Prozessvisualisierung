@@ -7,6 +7,7 @@ Short description: Module for handling processvisualisation
 
 """
 
+from logging import error
 from threading import Thread
 import pygame
 import time
@@ -34,8 +35,8 @@ class ProcessVisualisation(object):
         self.model = "IAS-Logo"
         self.baseLevelHeight = 0.0
 
+    # Handles the process of executing a visualisation task
     def executeOrder(self):
-        from api.models import StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         from api.settings import visualiser
 
         # get parameter for task and setup visualiser
@@ -46,43 +47,84 @@ class ProcessVisualisation(object):
         if not pygame.get_init():
             visualiser.initPygame()
         visualiser.reviveVisualiser()
-        # wait for carrier
+
+        """
+        Incoming carrier
+        """
         self._updateStateWorkingPiece()
         Thread(target=self._updateState, args=["waiting"]).start()
         visualiser.displayIdleStill()
-        if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
-            Thread(target=self._updateState, args=["playing"]).start()
-            print("[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
-            visualiser.displayIncomingCarrier()
-        else:
-            print(
-                "[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
-        # display process
+        errorCounter = 0
+        while True:
+            if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
+                # display incoming carrier
+                Thread(target=self._updateState, args=["playing"]).start()
+                print(
+                    "[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
+                visualiser.displayIncomingCarrier()
+                break
+            else:
+                errorCounter += 1
+                if errorCounter <= 3:
+                    # repeating carrierdetection
+                    print(
+                        "[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
+                    self._sendError(
+                        msg="Detected Carrier in exit, but expected it on entrance. Resetting carrierdetection")
+                else:
+                    # aborting visualisation task cause it detected too often the carrier on the exit
+                    print(
+                        "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
+                    self._sendError(
+                        msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
+                    self._cleanup()
+                    return
+
+        """
+        process itself
+        """
         Thread(target=self._updateStateWorkingPiece).start()
         visualiser.displayProcessVisualisation()
         Thread(target=self._updateState, args=["finished"]).start()
-
         # update parameter if task is finished
         Thread(target=self._updatePar).start()
 
-        # display outgoing carrier
-        # self._updateStateWorkingPiece()
+        """
+        outgoing carrier
+        """
         Thread(target=self._updateState, args=["finished"]).start()
-        if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
-            visualiser.displayOutgoingCarrier()
-        else:
-            print(
-                "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
+        errorCounter = 0
+        while True:
+            if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
+                visualiser.displayOutgoingCarrier()
+                break
+            else:
+                errorCounter += 1
+                if errorCounter <= 3:
+                    # repeating carrierdetection
+                    print(
+                        "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
+                    self._sendError(
+                        msg="Detected Carrier in entrance, but expected it on exit. Resetting carrierdetection")
+                else:
+                    # aborting visualisation task cause it detected too often the carrier on the entrance
+                    print(
+                        "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
+                    self._sendError(
+                        msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
+                    self._cleanup()
+                    return
 
+        """
+        Cleanup
+        """
         Thread(target=self._updateState, args=["idle"]).start()
-        task = VisualisationTaskModel.query.filter_by(id=1).first()
-        self.db.session.delete(task)
-        self.db.session.commit()
-        workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
-        self.db.session.delete(workingPiece)
-        self.db.session.commit()
-
+        self._cleanup()
         visualiser.reviveVisualiser()
+
+        """
+        display idle
+        """
         displayIdleThread = Thread(target=self._idleAnimation)
         displayIdleThread.start()
         print("[PROCESSVISUALISATION] Carrier leaved the unit. Visualisation ended.")
@@ -187,3 +229,31 @@ class ProcessVisualisation(object):
                 print(request.status_code)
         except Exception as e:
             pass
+
+    # sends error to mes
+    def _sendError(self, msg, level="[WARNING]", category="Operational issue"):
+
+        data = {
+            "msg": msg,
+            "category": category,
+            "level": level,
+            "isSolved": True
+        }
+        try:
+            request = requests.put(IP_MES+":8000/api/Error/", data=data)
+            if not request.ok:
+                print(request.status_code)
+        except Exception as e:
+            print("[PROCESSVISUALISATION] Couldn't send error to MES. Check Connection")
+
+    # cleanup local database
+    def _cleanup(self):
+        from api.models import StateWorkingPieceModel, VisualisationTaskModel  # nopep8
+        # delete visualisation task from local database
+        task = VisualisationTaskModel.query.filter_by(id=1).first()
+        self.db.session.delete(task)
+        self.db.session.commit()
+        # delete stateworkingpiece from local database
+        workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
+        self.db.session.delete(workingPiece)
+        self.db.session.commit()
