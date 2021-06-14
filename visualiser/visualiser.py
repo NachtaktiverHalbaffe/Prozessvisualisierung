@@ -31,7 +31,7 @@ class Visualiser(object):
         # resolution to render
         self.display = (1920, 1080)
         # visualisation params
-        self.isAssemled = True
+        self.isAssembled = True
         self.isPackaged = False
         self.paintColor = "#00fcef"
         self.color = '#CCCCCC'
@@ -122,7 +122,7 @@ class Visualiser(object):
             self._enableGLFeatures(True)
             # Move model 0.05 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
-            if matrix[3][0] < 7:
+            if matrix[3][0] < 9:
                 glTranslatef(0.1, 0, 0)
             else:
                 hasReachedTarget = True
@@ -152,7 +152,7 @@ class Visualiser(object):
                     self.model.assemble(currentTime)
                 else:
                     finished = True
-                    self.isAssemled = True
+                    self.setIsAssembled(True)
                     self.model.assemble(currentTime)
             elif self.task == 'color':
                 if currentTime < 5:
@@ -180,10 +180,11 @@ class Visualiser(object):
                     self.isPackaged = False
             elif self.task == 'generic':
                 if currentTime < 5:
-                    self.generic(currentTime)
+                    self.model.generic(currentTime)
                 else:
                     finished = True
-                    self.generic(currentTime)
+                    self.isAssembled = False
+                    self.model.generic(currentTime)
             skybox.ground()
             self._enableGLFeatures(False)
             pygame.display.flip()
@@ -210,13 +211,13 @@ class Visualiser(object):
     def loadModel(self):
         if self.modelName == 'IAS-Logo':
             self.model = IASModel()
-            self.model.setAssembled(self.isAssemled)
+            self.model.setAssembled(self.isAssembled)
             self.model.setPackaged(self.isPackaged)
             self.model.setColor(self.color)
         else:
             # IAS logo is standard model to be loaded
             self.model = IASModel()
-            self.model.setAssembled(self.isAssemled)
+            self.model.setAssembled(self.isAssembled)
             self.model.setPackaged(self.isPackaged)
             self.model.setColor(self.color)
 
@@ -233,7 +234,7 @@ class Visualiser(object):
         pygame.display.set_mode(self.display, DOUBLEBUF | OPENGL)
         # set camera perspektive
         gluPerspective(60, (self.display[0] / self.display[1]), 1, 500.0)
-        glTranslatef(-12, -2, -5)
+        glTranslatef(-15, -2, -5)
         glRotatef(60, 1, 0, 0)
         # enable gl features
         glEnable(GL_DEPTH_TEST)
@@ -283,7 +284,7 @@ class Visualiser(object):
     """
 
     def setIsAssembled(self, isAssembled):
-        self.isAssemled = isAssembled
+        self.isAssembled = isAssembled
         if self.model != None :
             self.model.setAssembled(isAssembled)
 

@@ -149,24 +149,17 @@ class IASModel(Model):
     def generic(self, time):
         for i in range(len(self.models)):
             if i == 0:
-                # correcting position
                 glPushMatrix()
-                if self.isAssembled:
-                    glTranslated(-0.2, 0, 0)
-                else:
-                    glTranslated(-3, 0, 0)
+                glTranslated(-0.2-0.56*time, 0, 0)
                 glRotated(90, 0, 1, 0)
                 glScaled(0.75, 0.75, 0.75)
                 # coloring
                 glEnable(GL_COLOR_MATERIAL)
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
             elif i == 1:
                 glPushMatrix()
-                # correcting position
                 glRotated(90, 0, 1, 0)
                 # coloring depending if piece was painted or not
                 glEnable(GL_COLOR_MATERIAL)
@@ -174,22 +167,15 @@ class IASModel(Model):
                     colorRGB = self._hexToRGB(self.color)
                 else:
                     colorRGB = (1, 1, 1)
-                glColor3d(colorRGB[0], colorRGB[1], colorRGB[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], colorRGB)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
             elif i == 2:
                 glPushMatrix()
-                # correcting position
-                if self.isAssembled:
-                    glTranslated(0.5, 0, -0.3)
-                else:
-                    glTranslated(2, 0, -0.3)
+                glTranslated(0.5 + 0.56*time, 0, -0.3)
                 glRotated(90, 0, 1, 0)
                 glEnable(GL_COLOR_MATERIAL)
                 # coloring
-                glColor3d(
-                    self.staticColor[0], self.staticColor[1], self.staticColor[2])
-                self._drawModel(self.models[i])
+                self._drawModel(self.models[i], self.staticColor)
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()

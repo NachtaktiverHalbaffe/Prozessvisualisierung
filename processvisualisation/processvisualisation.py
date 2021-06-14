@@ -41,6 +41,7 @@ class ProcessVisualisation(object):
         # get parameter for task and setup visualiser
         print("[PROCESSVISUALISATION] Visualisation startet.")
         self.updateOrder()
+        visualiser.killVisualiser()
         pygame.quit()
         if not pygame.get_init():
             visualiser.initPygame()
@@ -51,9 +52,6 @@ class ProcessVisualisation(object):
         visualiser.displayIdleStill()
         if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
             Thread(target=self._updateState, args= ["playing"]).start()
-            visualiser.killVisualiser()
-            time.sleep(1)
-            visualiser.reviveVisualiser()
             print("[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
             visualiser.displayIncomingCarrier()
         else:
@@ -101,12 +99,12 @@ class ProcessVisualisation(object):
         if workingPiece.count() ==1:
             workingPiece= workingPiece.first()
             self.model = workingPiece.model
-            self.isAssemled = workingPiece.isAssembled
+            self.isAssembled = workingPiece.isAssembled
             self.isPackaged = workingPiece.isPackaged
             self.color = workingPiece.color
         else:
             self.model = "IAS-Logo"
-            self.isAssemled = False
+            self.isAssembled= False
             self.isPackaged = False
             self.color = "#000000"
 
@@ -118,7 +116,7 @@ class ProcessVisualisation(object):
 
         visualiser.setColor(self.color)
         visualiser.setPaintColor(self.paintColor)
-        visualiser.setIsAssembled(self.isAssemled)
+        visualiser.setIsAssembled(self.isAssembled)
         visualiser.setIsPackaged(self.isPackaged)
         visualiser.setModelName(self.model)
         visualiser.setTask(self.task)
@@ -163,6 +161,9 @@ class ProcessVisualisation(object):
         elif self.task == "unpackage":
             self.isPackaged = False
             workingPiece.isPackaged = self.isPackaged
+        elif self.task == "generivisualiser.reviveVisualiser()c":
+            self.isAssembled = False
+            workingPiece.isAssembled = self.isAssembled
         self.db.session.add(workingPiece)
         self.db.session.commit()
         # update stateworkingpiece in mes
