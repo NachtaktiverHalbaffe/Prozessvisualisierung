@@ -240,7 +240,7 @@ class ProcessVisualisation(object):
             "isSolved": True
         }
         try:
-            request = requests.put(IP_MES+":8000/api/Error/", data=data)
+            request = requests.post(IP_MES+":8000/api/Error/", data=data)
             if not request.ok:
                 print(request.status_code)
         except Exception as e:

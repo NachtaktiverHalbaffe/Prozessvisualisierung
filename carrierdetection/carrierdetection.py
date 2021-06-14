@@ -34,8 +34,6 @@ class CarrierDetection(object):
         self._measureExit()
         time.sleep(1)
         self._measureEntrance()
-        print(self.distanceEntrance)
-        print(self.distanceExit)
         if abs(self.distanceEntrance - self.distanceExit) < 6:
             GPIO.cleanup()
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
@@ -53,11 +51,10 @@ class CarrierDetection(object):
         self.distanceExit = 0.0
 
         while True:
-            time.sleep(0.2)
+            time.sleep(0.1)
             self._measureEntrance()
-            time.sleep(0.2)
+            time.sleep(0.1)
             self._measureExit()
-           
             
             if exspected == 'entrance':
                 if baseLevelHeight - self.distanceExit > 10:
@@ -69,7 +66,6 @@ class CarrierDetection(object):
                     isExpected = True
                     break
             elif exspected == 'exit':
-                print(self.distanceExit)
                 if baseLevelHeight - self.distanceEntrance > 10:
                     print("[CARRIERDETECTION] Detected carrier on entrance")
                     isExpected = False
