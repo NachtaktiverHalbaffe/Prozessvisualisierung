@@ -136,7 +136,6 @@ class VisualisationTask(Resource):
             pvThread.start()
         except Exception as e:
             print(e)
-        # processVisualisation.executeOrder()
 
         return task, 201
 

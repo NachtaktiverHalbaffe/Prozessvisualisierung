@@ -51,11 +51,12 @@ class ProcessVisualisation(object):
         Thread(target=self._updateState, args=["waiting"]).start()
         visualiser.displayIdleStill()
         if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
-            Thread(target=self._updateState, args= ["playing"]).start()
+            Thread(target=self._updateState, args=["playing"]).start()
             print("[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
             visualiser.displayIncomingCarrier()
         else:
-            print("[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
+            print(
+                "[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
         # display process
         Thread(target=self._updateStateWorkingPiece).start()
         visualiser.displayProcessVisualisation()
@@ -65,12 +66,13 @@ class ProcessVisualisation(object):
         Thread(target=self._updatePar).start()
 
         # display outgoing carrier
-        #self._updateStateWorkingPiece()
-        Thread(target= self._updateState, args=["finished"]).start()
+        # self._updateStateWorkingPiece()
+        Thread(target=self._updateState, args=["finished"]).start()
         if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
             visualiser.displayOutgoingCarrier()
         else:
-           print("[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
+            print(
+                "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
 
         Thread(target=self._updateState, args=["idle"]).start()
         task = VisualisationTaskModel.query.filter_by(id=1).first()
@@ -81,7 +83,7 @@ class ProcessVisualisation(object):
         self.db.session.commit()
 
         visualiser.reviveVisualiser()
-        displayIdleThread = Thread(target= self._idleAnimation)
+        displayIdleThread = Thread(target=self._idleAnimation)
         displayIdleThread.start()
         print("[PROCESSVISUALISATION] Carrier leaved the unit. Visualisation ended.")
 
@@ -96,15 +98,15 @@ class ProcessVisualisation(object):
 
         # update state of workingpiece
         workingPiece = StateWorkingPieceModel.query.filter_by(id=1)
-        if workingPiece.count() ==1:
-            workingPiece= workingPiece.first()
+        if workingPiece.count() == 1:
+            workingPiece = workingPiece.first()
             self.model = workingPiece.model
             self.isAssembled = workingPiece.isAssembled
             self.isPackaged = workingPiece.isPackaged
             self.color = workingPiece.color
         else:
             self.model = "IAS-Logo"
-            self.isAssembled= False
+            self.isAssembled = False
             self.isPackaged = False
             self.color = "#000000"
 
@@ -122,16 +124,21 @@ class ProcessVisualisation(object):
         visualiser.setTask(self.task)
 
     def _updateState(self, newState):
-        from api.models import StateModel # nopep8
-
+        from api.models import StateModel  # nopep8
+        # update stateworkingpiece
         state = StateModel.query.filter_by(id=1).first()
         state.state = newState
         self.db.session.add(state)
         self.db.session.commit()
 
         # send update to mes
+        if newState != "idle":
+            task = state.task
+        else:
+            task = "None"
         data = {
-            "state": newState
+            "state": newState,
+            "assignedTask": task
         }
         try:
             request = requests.patch(
@@ -147,7 +154,7 @@ class ProcessVisualisation(object):
         visualiser.displayIdle()
 
     def _updatePar(self):
-        from api.models import StateWorkingPieceModel # nopep8
+        from api.models import StateWorkingPieceModel  # nopep8
         workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
         if self.task == "color":
             self.color = self.paintColor
