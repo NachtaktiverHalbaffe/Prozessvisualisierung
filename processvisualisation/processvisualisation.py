@@ -175,7 +175,7 @@ class ProcessVisualisation(object):
 
         # send update to mes
         if newState != "idle":
-            task = state.task
+            task = self.task
         else:
             task = "None"
         data = {
