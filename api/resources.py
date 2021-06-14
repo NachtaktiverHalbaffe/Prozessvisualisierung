@@ -7,7 +7,7 @@ Short description: resources for flask api
 
 """
 from api.models import StateWorkingPieceModel
-from mesrequests import getStateWorkingPiece
+from mesrequests import getStateWorkingPiece, updateStateVisualisationUnit
 from models import *
 from settings import visualiser, db
 from constants import IP_MES
@@ -131,26 +131,11 @@ class VisualisationTask(Resource):
         db.session.commit()
 
         data = {
-            "state": state.state,
-            "ipAdress": state.ipAdress,
-            "boundToRessource": state.boundToResourceID,
-            "baseLevelHeight": state.baseLevelHeight,
             "assignedTask": "None",
         }
         # inform mes and quit processvisualisation
         visualiser.killVisualiser()
-        try:
-            request = requests.post(
-                IP_MES+":8000/api/StateVisualisationUnit/", data=data)
-            if not request.ok:
-                # already exists => update it
-                request = requests.patch(
-                    IP_MES+":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
-                if not request.ok:
-                    # error
-                    pass
-        except Exception as e:
-            print(e)
+        updateStateVisualisationUnit(state.boundToResourceID, data)
         return "", 204
 
     @marshal_with(resourceFields)
