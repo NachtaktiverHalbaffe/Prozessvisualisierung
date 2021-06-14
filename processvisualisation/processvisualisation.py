@@ -62,10 +62,10 @@ class ProcessVisualisation(object):
         Thread(target=self._updateState, args=["finished"]).start()
 
         # update parameter if task is finished
-        self._updatePar()
+        Thread(target=self._updatePar).start()
 
         # display outgoing carrier
-        self._updateStateWorkingPiece()
+        #self._updateStateWorkingPiece()
         Thread(target= self._updateState, args=["finished"]).start()
         if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
             visualiser.displayOutgoingCarrier()
@@ -161,7 +161,7 @@ class ProcessVisualisation(object):
         elif self.task == "unpackage":
             self.isPackaged = False
             workingPiece.isPackaged = self.isPackaged
-        elif self.task == "generivisualiser.reviveVisualiser()c":
+        elif self.task == "generic":
             self.isAssembled = False
             workingPiece.isAssembled = self.isAssembled
         self.db.session.add(workingPiece)

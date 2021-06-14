@@ -169,7 +169,7 @@ class Visualiser(object):
                 else:
                     finished = True
                     self.package(currentTime)
-                    self.isPackaged = True
+                    self.setIsPackaged(True)
             elif self.task == 'unpackage':
                 self.setIsPackaged(False)
                 if currentTime < 5:
@@ -177,14 +177,14 @@ class Visualiser(object):
                 else:
                     finished = True
                     self.unpackage(currentTime)
-                    self.isPackaged = False
+                    self.setIsPackaged(False)
             elif self.task == 'generic':
                 if currentTime < 5:
                     self.model.generic(currentTime)
                 else:
                     finished = True
-                    self.isAssembled = False
                     self.model.generic(currentTime)
+                    self.setIsAssembled(False)
             skybox.ground()
             self._enableGLFeatures(False)
             pygame.display.flip()

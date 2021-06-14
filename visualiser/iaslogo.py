@@ -172,7 +172,7 @@ class IASModel(Model):
                 glPopMatrix()
             elif i == 2:
                 glPushMatrix()
-                glTranslated(0.5 + 0.56*time, 0, -0.3)
+                glTranslated(0.5 + 0.3*time, 0, -0.3)
                 glRotated(90, 0, 1, 0)
                 glEnable(GL_COLOR_MATERIAL)
                 # coloring
