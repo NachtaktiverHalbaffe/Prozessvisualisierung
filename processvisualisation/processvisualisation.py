@@ -8,7 +8,7 @@ Short description: Module for handling processvisualisation
 """
 
 from api.mesrequests import sendError, getStateWorkingPiece, updateStateVisualisationUnit, updateStateWorkingPiece
-from threading import Thread
+from threading import Thread, Event
 import pygame
 import time
 import sys
@@ -34,10 +34,12 @@ class ProcessVisualisation(object):
         self.task = "assemble"
         self.model = "IAS-Logo"
         self.baseLevelHeight = 0.0
+        self.pvStopFlag= Event()
+        self.pvStopFlag.clear()
 
     # Handles the process of executing a visualisation task
     def executeOrder(self):
-        from api.settings import visualiser, pvStopFlag
+        from api.settings import visualiser
 
         # get parameter for task and setup visualiser
         print("[PROCESSVISUALISATION] Visualisation startet.")
@@ -51,12 +53,20 @@ class ProcessVisualisation(object):
         """
         Incoming carrier
         """
-        self._updateStateWorkingPiece()
-        Thread(target=self._updateState, args=["waiting"]).start()
-        visualiser.displayIdleStill()
+        print(self.pvStopFlag.is_set())
+        if not self.pvStopFlag.is_set():
+            self._updateStateWorkingPiece()
+            Thread(target=self._updateState, args=["waiting"]).start()
+            visualiser.displayIdleStill()
+        else:
+            visualiser.displayIdleStill()
+            Thread(target=self._idleAnimation).start()
+            self.pvStopFlag.clear()
+            return
         errorCounter = 0
         while True:
-            if not pvStopFlag.isSet():
+            print(self.pvStopFlag.is_set())
+            if not self.pvStopFlag.is_set():
                 if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
                     # display incoming carrier
                     Thread(target=self._updateState, args=["playing"]).start()
@@ -83,32 +93,34 @@ class ProcessVisualisation(object):
                         self._cleanup()
                         return
             else:
+                visualiser.displayIdleStill()
                 Thread(target=self._idleAnimation).start()
-                pvStopFlag.clear()
+                self.pvStopFlag.clear()
                 return
 
         """
         process itself
         """
-        self.updateOrder()
-        Thread(target=self._updateStateWorkingPiece).start()
-        if not pvStopFlag.isSet():
+        print(self.pvStopFlag.is_set())
+        if not self.pvStopFlag.is_set():
+            self.updateOrder()
+            Thread(target=self._updateStateWorkingPiece).start()
             visualiser.displayProcessVisualisation()
             Thread(target=self._updateState, args=["finished"]).start()
             # update parameter if task is finished
             Thread(target=self._updatePar).start()
         else:
+            visualiser.displayIdleStill()
             Thread(target=self._idleAnimation).start()
-            pvStopFlag.clear()
+            self.pvStopFlag.clear()
             return
         """
         outgoing carrier
         """
         Thread(target=self._updateState, args=["finished"]).start()
-
         errorCounter = 0
         while True:
-            if not pvStopFlag.isSet():
+            if not self.pvStopFlag.is_set():
                 if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
                     visualiser.displayOutgoingCarrier()
                     break
@@ -129,8 +141,9 @@ class ProcessVisualisation(object):
                         self._cleanup()
                         return
             else:
+                visualiser.displayIdleStill()
                 Thread(target=self._idleAnimation).start()
-                pvStopFlag.clear()
+                self.pvStopFlag.clear()
                 return
 
         """
@@ -172,6 +185,9 @@ class ProcessVisualisation(object):
 
         state = StateModel.query.filter_by(id=1).first()
         self.baseLevelHeight = state.baseLevelHeight
+
+    def kill(self):
+        self.pvStopFlag.set()
 
     def _updateStateWorkingPiece(self):
         from api.settings import visualiser
