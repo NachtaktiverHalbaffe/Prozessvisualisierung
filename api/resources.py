@@ -9,7 +9,7 @@ Short description: resources for flask api
 from api.models import StateWorkingPieceModel
 from mesrequests import getStateWorkingPiece, updateStateVisualisationUnit
 from models import *
-from settings import visualiser, db
+from settings import visualiser, db, pvStopFlag
 from constants import IP_MES
 from processvisualisation.processvisualisation import ProcessVisualisation
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
@@ -109,6 +109,7 @@ class VisualisationTask(Resource):
         getStateWorkingPiece(task.assignedWorkingPiece)
         # start visualisation task
         try:
+            pvStopFlag.clear()
             visualiser.killVisualiser()
             visualiser.reviveVisualiser()
             pv = ProcessVisualisation(db)
@@ -136,7 +137,7 @@ class VisualisationTask(Resource):
         }
         # inform mes and quit processvisualisation
         visualiser.killVisualiser()
-        # TODO abort processvisualisation
+        pvStopFlag.set()
         updateStateVisualisationUnit(state.boundToResourceID, data)
         return "", 204
 

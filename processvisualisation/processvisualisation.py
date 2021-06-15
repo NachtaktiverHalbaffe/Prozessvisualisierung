@@ -37,7 +37,7 @@ class ProcessVisualisation(object):
 
     # Handles the process of executing a visualisation task
     def executeOrder(self):
-        from api.settings import visualiser
+        from api.settings import visualiser, pvStopFlag
 
         # get parameter for task and setup visualiser
         print("[PROCESSVISUALISATION] Visualisation startet.")
@@ -56,67 +56,82 @@ class ProcessVisualisation(object):
         visualiser.displayIdleStill()
         errorCounter = 0
         while True:
-            if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
-                # display incoming carrier
-                Thread(target=self._updateState, args=["playing"]).start()
-                # update state of workingpiece
-                getStateWorkingPiece(self.assignedWorkingPiece)
-                print(
-                    "[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
-                visualiser.displayIncomingCarrier()
-                break
-            else:
-                errorCounter += 1
-                if errorCounter <= 3:
-                    # repeating carrierdetection
+            if not pvStopFlag.isSet():
+                if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
+                    # display incoming carrier
+                    Thread(target=self._updateState, args=["playing"]).start()
+                    # update state of workingpiece
+                    getStateWorkingPiece(self.assignedWorkingPiece)
                     print(
-                        "[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
-                    sendError(
-                        msg="Detected Carrier in exit, but expected it on entrance. Resetting carrierdetection")
+                        "[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
+                    visualiser.displayIncomingCarrier()
+                    break
                 else:
-                    # aborting visualisation task cause it detected too often the carrier on the exit
-                    print(
-                        "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
-                    sendError(
-                        msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
-                    self._cleanup()
-                    return
+                    errorCounter += 1
+                    if errorCounter <= 3:
+                        # repeating carrierdetection
+                        print(
+                            "[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
+                        sendError(
+                            msg="Detected Carrier in exit, but expected it on entrance. Resetting carrierdetection")
+                    else:
+                        # aborting visualisation task cause it detected too often the carrier on the exit
+                        print(
+                            "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
+                        sendError(
+                            msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
+                        self._cleanup()
+                        return
+            else:
+                Thread(target=self._idleAnimation).start()
+                pvStopFlag.clear()
+                return
 
         """
         process itself
         """
         self.updateOrder()
         Thread(target=self._updateStateWorkingPiece).start()
-        visualiser.displayProcessVisualisation()
-        Thread(target=self._updateState, args=["finished"]).start()
-        # update parameter if task is finished
-        Thread(target=self._updatePar).start()
-
+        if not pvStopFlag.isSet():
+            visualiser.displayProcessVisualisation()
+            Thread(target=self._updateState, args=["finished"]).start()
+            # update parameter if task is finished
+            Thread(target=self._updatePar).start()
+        else:
+            Thread(target=self._idleAnimation).start()
+            pvStopFlag.clear()
+            return
         """
         outgoing carrier
         """
         Thread(target=self._updateState, args=["finished"]).start()
+
         errorCounter = 0
         while True:
-            if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
-                visualiser.displayOutgoingCarrier()
-                break
-            else:
-                errorCounter += 1
-                if errorCounter <= 3:
-                    # repeating carrierdetection
-                    print(
-                        "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
-                    sendError(
-                        msg="Detected Carrier in entrance, but expected it on exit. Resetting carrierdetection")
+            if not pvStopFlag.isSet():
+                if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
+                    visualiser.displayOutgoingCarrier()
+                    break
                 else:
-                    # aborting visualisation task cause it detected too often the carrier on the entrance
-                    print(
-                        "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
-                    sendError(
-                        msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
-                    self._cleanup()
-                    return
+                    errorCounter += 1
+                    if errorCounter <= 3:
+                        # repeating carrierdetection
+                        print(
+                            "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
+                        sendError(
+                            msg="Detected Carrier in entrance, but expected it on exit. Resetting carrierdetection")
+                    else:
+                        # aborting visualisation task cause it detected too often the carrier on the entrance
+                        print(
+                            "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
+                        sendError(
+                            msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
+                        self._cleanup()
+                        return
+            else:
+                Thread(target=self._idleAnimation).start()
+                pvStopFlag.clear()
+                return
 
         """
         Cleanup
@@ -185,7 +200,7 @@ class ProcessVisualisation(object):
             "state": newState,
             "assignedTask": task
         }
-        updateStateVisualisationUnit(state.boundToResourceID,data)
+        updateStateVisualisationUnit(state.boundToResourceID, data)
 
     def _idleAnimation(self):
         from api.settings import visualiser
@@ -221,8 +236,8 @@ class ProcessVisualisation(object):
         }
         updateStateWorkingPiece(workingPiece.pieceID, data)
 
-
     # cleanup local database
+
     def _cleanup(self):
         from api.models import StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         # delete visualisation task from local database

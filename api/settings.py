@@ -3,8 +3,7 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
-from threading import Thread
-from processvisualisation.processvisualisation import ProcessVisualisation  # nopep8
+from threading import Event
 from visualiser.visualiser import Visualiser
 
 import pygame
@@ -16,3 +15,4 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 visualiser = Visualiser()
+pvStopFlag = Event()
