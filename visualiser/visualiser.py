@@ -93,7 +93,7 @@ class Visualiser(object):
             # Move model 1 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < -3:
-                glTranslatef(0.1, 0, 0)
+                glTranslatef(0.2, 0, 0)
 
             else:
                 hasReachedTarget = True
@@ -123,7 +123,7 @@ class Visualiser(object):
             # Move model 0.05 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < 9:
-                glTranslatef(0.1, 0, 0)
+                glTranslatef(0.2, 0, 0)
             else:
                 hasReachedTarget = True
             self.animateModel()
@@ -231,7 +231,7 @@ class Visualiser(object):
 
     def initPygame(self):
         pygame.init()
-        pygame.display.set_mode(self.display, DOUBLEBUF | OPENGL)
+        pygame.display.set_mode(self.display, FULLSCREEN |DOUBLEBUF | OPENGL)
         # set camera perspektive
         gluPerspective(60, (self.display[0] / self.display[1]), 1, 500.0)
         glTranslatef(-15, -2, -5)

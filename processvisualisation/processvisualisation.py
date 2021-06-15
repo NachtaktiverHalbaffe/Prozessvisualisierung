@@ -46,6 +46,7 @@ class ProcessVisualisation(object):
         print("[PROCESSVISUALISATION] Visualisation startet.")
         self.updateOrder()
         visualiser.killVisualiser()
+        self.pvStopFlag.clear()
         pygame.quit()
         if not pygame.get_init():
             visualiser.initPygame()
