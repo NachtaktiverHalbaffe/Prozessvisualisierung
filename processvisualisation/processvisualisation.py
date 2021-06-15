@@ -34,7 +34,8 @@ class ProcessVisualisation(object):
         self.task = "assemble"
         self.model = "IAS-Logo"
         self.baseLevelHeight = 0.0
-        self.pvStopFlag= Event()
+        self.boundToResource = 0
+        self.pvStopFlag = Event()
         self.pvStopFlag.clear()
 
     # Handles the process of executing a visualisation task
@@ -87,9 +88,9 @@ class ProcessVisualisation(object):
                     else:
                         # aborting visualisation task cause it detected too often the carrier on the exit
                         print(
-                            "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
-                        sendError(
-                            msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation")
+                            "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
+                        sendError(category="[ERROR]",
+                                  msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         self._cleanup()
                         return
             else:
@@ -135,9 +136,9 @@ class ProcessVisualisation(object):
                     else:
                         # aborting visualisation task cause it detected too often the carrier on the entrance
                         print(
-                            "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
-                        sendError(
-                            msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation")
+                            "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
+                        sendError(category="[ERROR]",
+                                  msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
                         self._cleanup()
                         return
             else:
@@ -185,6 +186,7 @@ class ProcessVisualisation(object):
 
         state = StateModel.query.filter_by(id=1).first()
         self.baseLevelHeight = state.baseLevelHeight
+        self.boundToResource = state.boundToResourceID
 
     def kill(self):
         self.pvStopFlag.set()
