@@ -89,7 +89,7 @@ class ProcessVisualisation(object):
                         # aborting visualisation task cause it detected too often the carrier on the exit
                         print(
                             "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
-                        sendError(category="[ERROR]",
+                        sendError(level="[ERROR]",
                                   msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         self._cleanup()
                         return
@@ -137,7 +137,7 @@ class ProcessVisualisation(object):
                         # aborting visualisation task cause it detected too often the carrier on the entrance
                         print(
                             "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
-                        sendError(category="[ERROR]",
+                        sendError(level="[ERROR]",
                                   msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
                         self._cleanup()
                         return
