@@ -60,7 +60,6 @@ class ProcessVisualisation(object):
         # get parameter for task and setup visualiser
         self.logger.info("[PROCESSVISUALISATION] Visualisation startet.")
         self.updateOrder()
-        visualiser.killVisualiser()
         self.pvStopFlag.clear()
         pygame.quit()
         if not pygame.get_init():
@@ -71,7 +70,7 @@ class ProcessVisualisation(object):
         Incoming carrier
         """
         if not self.pvStopFlag.is_set():
-            self._updateStateWorkingPiece()
+            self._updateVisualiser()
             Thread(target=self._updateState, args=["waiting"]).start()
             visualiser.displayIdleStill()
         else:
@@ -85,8 +84,11 @@ class ProcessVisualisation(object):
                 if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
                     # display incoming carrier
                     Thread(target=self._updateState, args=["playing"]).start()
-                    # update state of workingpiece
+                    # get final state of workingpiece from mes and
+                    # update everything that needs to be updated
                     getStateWorkingPiece(self.assignedWorkingPiece)
+                    self.updateOrder()
+                    self._updateVisualiser()
                     self.logger.info(
                         "[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
                     visualiser.displayIncomingCarrier()
@@ -105,6 +107,8 @@ class ProcessVisualisation(object):
                             "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         sendError(level="[ERROR]",
                                   msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
+                        visualiser.displayIdleStill()
+                        Thread(target=self._idleAnimation).start()
                         self._cleanup()
                         return
             else:
@@ -121,12 +125,18 @@ class ProcessVisualisation(object):
             data = getStatePLC(self.boundToResource)
             # only display visualisation if bound resource is also busy
             if data["state"] == "busy":
-                self.updateOrder()
-                Thread(target=self._updateStateWorkingPiece).start()
-                if visualiser.displayProcessVisualisation():
-                    Thread(target=self._updateState, args=["finished"]).start()
-                    # update parameter if task is finished
-                    Thread(target=self._updatePar).start()
+                if self._validateTask():
+                    Thread(target=self._updateVisualiser).start()
+                    if visualiser.displayProcessVisualisation():
+                        Thread(target=self._updateState,
+                               args=["finished"]).start()
+                        # update parameter if task is finished
+                        Thread(target=self._updatePar).start()
+                else:
+                    self.errorLogger.error(
+                        "[PROCESSVISUALISATION] Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
+                    sendError(level="[ERROR]",
+                              msg="[PROCESSVISUALISATION] Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
             else:
                 self.errorLogger.warning(
                     "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
@@ -162,6 +172,8 @@ class ProcessVisualisation(object):
                         sendError(level="[ERROR]",
                                   msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
                         self._cleanup()
+                        visualiser.displayIdleStill()
+                        Thread(target=self._idleAnimation).start()
                         return
             else:
                 visualiser.displayIdleStill()
@@ -214,7 +226,7 @@ class ProcessVisualisation(object):
     def kill(self):
         self.pvStopFlag.set()
 
-    def _updateStateWorkingPiece(self):
+    def _updateVisualiser(self):
         from api.settings import visualiser
 
         visualiser.setColor(self.color)
@@ -278,7 +290,6 @@ class ProcessVisualisation(object):
         updateStateWorkingPiece(workingPiece.pieceID, data)
 
     # cleanup local database
-
     def _cleanup(self):
         from api.models import StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         # delete visualisation task from local database
@@ -289,3 +300,39 @@ class ProcessVisualisation(object):
         workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
         self.db.session.delete(workingPiece)
         self.db.session.commit()
+
+    # validate if task is executable depending on state of workingpiece
+    def _validateTask(self):
+        if self.task == "assemble":
+            # for assembly the workingpiece needs to be not assembled and not packaged
+            if self.isAssembled or self.isPackaged:
+                return False
+            elif not self.isAssembled and not self.isPackaged:
+                return True
+        elif self.task == "package":
+            # for packaging the workingpiece needs to be not packaged
+            if not self.isPackaged:
+                return True
+            elif self.isPackaged:
+                return False
+        elif self.task == "unpackage":
+            # for unpackaging the workingpiece needs to be packaged
+            if self.isPackaged:
+                return True
+            elif not self.isPackaged:
+                return False
+        elif self.task == "color":
+            # for coloring the workingpiece needs to be not packaged
+            if not self.isPackaged:
+                return True
+            elif self.isPackaged:
+                return False
+        elif self.task == "generic":
+            # each model has unique generic task, so validation
+            # depends on model
+            if self.model == "IAS-Logo":
+                # for disassembly the workingpiece needs to be assembled and not packaged
+                if self.isAssembled and not self.isPackaged:
+                    return True
+                elif not self.isAssembled or self.isPackaged:
+                    return False

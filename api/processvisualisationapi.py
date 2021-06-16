@@ -7,7 +7,6 @@ Short description: Module for providing the REST Interface
 
 """
 
-
 import socket
 import sys
 sys.path.append('.')
@@ -17,7 +16,7 @@ from models import *  # nopep8
 from resources import *  # nopep8
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8 # nopep8
 from settings import db, app, api  # nopep8
-from mesrequests import updateStateVisualisationUnit # nopep8
+from mesrequests import updateStateVisualisationUnit  # nopep8
 from constants import IP_MES, BASE_LEVEL_HEIGHT  # nopep8
 
 api.add_resource(APIOverview, '/api')
@@ -38,7 +37,7 @@ if __name__ == "__main__":
     state = StateModel.query.filter_by(id=1).first()
     # use dummy socket and connect to non existing ip to ensure to get right ip adress
     testSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    testSock.connect(("10.255.255.255",1))
+    testSock.connect(("10.255.255.255", 1))
     ipAdress = testSock.getsockname()[0]
     if not state:
         state = StateModel(
@@ -53,6 +52,7 @@ if __name__ == "__main__":
         state.baseLevelHeight = calibrater.baseLevel
     db.session.add(state)
     db.session.commit()
+
     # delete unfinished visualisation task from local database for initial state
     task = VisualisationTaskModel.query.filter_by(id=1)
     if task.count() == 1:
