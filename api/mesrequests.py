@@ -9,12 +9,11 @@ Short description: Common http requests to or from the mes
 
 
 import requests
-import logging
 from constants import IP_MES, STREAM_HANDLER,  FILE_HANDLER_ERROR
-
+import logging
 # setup logger
 errorLogger = logging.getLogger("error")
-errorLogger.setLevel(logging.warning)
+errorLogger.setLevel(logging.WARNING)
 # add logger handler to logger
 errorLogger.handlers = []
 errorLogger.addHandler(STREAM_HANDLER)
@@ -82,13 +81,16 @@ def updateStateVisualisationUnit(id, data):
             IP_MES+":8000/api/StateVisualisationUnit/", data=data)
         if not request.ok:
             # already exists => update it
-            request = requests.patch(
-                IP_MES+":8000/api/StateVisualisationUnit/" + id, data=data)
-            if not request.ok:
-                errorLogger.warning("[MESREQUESTS] " + request.status_code)
-    except Exception as e:
-        errorLogger.warning(
+            try:
+                request = requests.patch(
+                    IP_MES+":8000/api/StateVisualisationUnit/" + str(id), data=data)
+                if not request.ok:
+                    errorLogger.warning("[MESREQUESTS] " + request.status_code)
+            except Exception as e:
+                errorLogger.warning(
             "[MESREQUESTS] Couldn't update StateVisualisationUnit in MES. Check Connection")
+    except Exception as e:
+        pass
 
 
 def updateStateWorkingPiece(id, data):

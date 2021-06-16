@@ -46,7 +46,7 @@ class Visualiser(object):
         self.logger = logging.getLogger("visualiser")
         self.logger.setLevel(logging.INFO)
         self.errorLogger = logging.getLogger("error")
-        self.errorLogger.setLevel(logging.warning)
+        self.errorLogger.setLevel(logging.WARNING)
         # add logger handler to logger
         self.logger.handlers = []
         self.logger.addHandler(STREAM_HANDLER)

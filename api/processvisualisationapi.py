@@ -8,7 +8,6 @@ Short description: Module for providing the REST Interface
 """
 
 
-from mesrequests import updateStateVisualisationUnit
 import socket
 import sys
 sys.path.append('.')
@@ -18,6 +17,7 @@ from models import *  # nopep8
 from resources import *  # nopep8
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8 # nopep8
 from settings import db, app, api  # nopep8
+from mesrequests import updateStateVisualisationUnit # nopep8
 from constants import IP_MES, BASE_LEVEL_HEIGHT  # nopep8
 
 api.add_resource(APIOverview, '/api')

@@ -43,7 +43,7 @@ class ProcessVisualisation(object):
         self.logger = logging.getLogger("processvisualisation")
         self.errorLogger = logging.getLogger("error")
         self.logger.setLevel(logging.INFO)
-        self.errorLogger.setLevel(logging.warning)
+        self.errorLogger.setLevel(logging.WARNING)
         # add logger handler to logger
         self.logger.handlers = []
         self.logger.addHandler(STREAM_HANDLER)

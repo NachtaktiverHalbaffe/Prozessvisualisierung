@@ -10,7 +10,6 @@ import RPi.GPIO as GPIO
 import time
 import logging
 from threading import Thread, Event
-from api.constants import FILE_HANDLER_PV, STREAM_HANDLER
 
 
 class CarrierDetection(object):
@@ -38,10 +37,21 @@ class CarrierDetection(object):
         # setup logging
         self.logger = logging.getLogger("processvisualisation")
         self.logger.setLevel(logging.INFO)
+        # logging format
+        log_formatter = logging.Formatter('[%(asctime)s ] %(message)s')
+        file_handler_pv = logging.FileHandler("processvisualisation.log")
+        file_handler_pv.setFormatter(log_formatter)
+        file_handler_pv.setLevel(logging.INFO)
+        file_handler_error = logging.FileHandler("errors.log")
+        file_handler_error.setFormatter(log_formatter)
+        file_handler_error.setLevel(logging.INFO)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(log_formatter)
+        stream_handler.setLevel(logging.INFO)
         # add logger handler to logger
         self.logger.handlers = []
-        self.logger.addHandler(STREAM_HANDLER)
-        self.logger.addHandler(FILE_HANDLER_PV)
+        self.logger.addHandler(stream_handler)
+        self.logger.addHandler(file_handler_pv)
 
     def calibrate(self):
         time.sleep(0.5)
