@@ -19,7 +19,7 @@ sys.path.append('..')
 from api.mesrequests import sendError, getStateWorkingPiece, updateStateVisualisationUnit, updateStateWorkingPiece, getStatePLC  # nopep8
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8
 from visualiser.visualiser import Visualiser  # nopep8
-from api.constants import IP_MES  # nopep8
+from api.constants import FILE_HANDLER_PV, STREAM_HANDLER, FILE_HANDLER_ERROR  # nopep8
 
 
 class ProcessVisualisation(object):
@@ -40,23 +40,17 @@ class ProcessVisualisation(object):
         self.pvStopFlag.clear()
 
         # setup logging
-        log_formatter = logging.Formatter(
-            '[%(asctime)s ] %(message)s')
-        # handler for logging to file
-        file_handler = logging.FileHandler("processvisualisation.log")
-        file_handler.setFormatter(log_formatter)
-        file_handler.setLevel(logging.INFO)
-        # handler for logging to console
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(log_formatter)
-        stream_handler.setLevel(logging.INFO)
-        # setup logger
-        self.logger = logging.getLogger("processvisuision")
+        self.logger = logging.getLogger("processvisualisation")
+        self.errorLogger = logging.getLogger("error")
         self.logger.setLevel(logging.INFO)
+        self.errorLogger.setLevel(logging.warning)
         # add logger handler to logger
         self.logger.handlers = []
-        self.logger.addHandler(stream_handler)
-        self.logger.addHandler(file_handler)
+        self.logger.addHandler(STREAM_HANDLER)
+        self.logger.addHandler(FILE_HANDLER_PV)
+        self.errorLogger.handlers = []
+        self.errorLogger.addHandler(STREAM_HANDLER)
+        self.errorLogger.addHandler(FILE_HANDLER_ERROR)
 
     # Handles the process of executing a visualisation task
 
@@ -101,13 +95,13 @@ class ProcessVisualisation(object):
                     errorCounter += 1
                     if errorCounter <= 3:
                         # repeating carrierdetection
-                        self.logger.info(
+                        self.errorLogger.warning(
                             "[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
                         sendError(
                             msg="Detected Carrier in exit, but expected it on entrance. Resetting carrierdetection")
                     else:
                         # aborting visualisation task cause it detected too often the carrier on the exit
-                        self.logger.info(
+                        self.errorLogger.error(
                             "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         sendError(level="[ERROR]",
                                   msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
@@ -134,8 +128,8 @@ class ProcessVisualisation(object):
                     # update parameter if task is finished
                     Thread(target=self._updatePar).start()
             else:
-                self.logger.info(
-                    "[PROCESSVISUALISATION] Resource isnt executing task. Assuming detected carrier hasnt a assigned task")
+                self.errorLogger.warning(
+                    "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
                 Thread(target=self._updateState, args=["finished"]).start()
         else:
             visualiser.displayIdleStill()
@@ -157,13 +151,13 @@ class ProcessVisualisation(object):
                     errorCounter += 1
                     if errorCounter <= 3:
                         # repeating carrierdetection
-                        self.logger.info(
+                        self.errorLogger.warning(
                             "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
                         sendError(
                             msg="Detected Carrier in entrance, but expected it on exit. Resetting carrierdetection")
                     else:
                         # aborting visualisation task cause it detected too often the carrier on the entrance
-                        self.logger.info(
+                        self.errorLogger.error(
                             "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
                         sendError(level="[ERROR]",
                                   msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))

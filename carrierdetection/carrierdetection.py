@@ -8,7 +8,9 @@ Short description: Module for detecting the carrier with ultrasonic sensor
 """
 import RPi.GPIO as GPIO
 import time
+import logging
 from threading import Thread, Event
+from api.constants import FILE_HANDLER_PV, STREAM_HANDLER
 
 
 class CarrierDetection(object):
@@ -20,6 +22,7 @@ class CarrierDetection(object):
         self.detectedIntrusion = False
         self.stopFlag = Event()
         self.stopFlag.clear()
+
         # setup sensors
         self.GPIO_TRIGGER_1 = 23  # entrance
         self.GPIO_TRIGGER_2 = 16  # exit
@@ -31,6 +34,14 @@ class CarrierDetection(object):
         GPIO.setup(self.GPIO_ECHO_1, GPIO.IN)
         GPIO.setup(self.GPIO_TRIGGER_2, GPIO.OUT)
         GPIO.setup(self.GPIO_ECHO_2, GPIO.IN)
+
+        # setup logging
+        self.logger = logging.getLogger("processvisualisation")
+        self.logger.setLevel(logging.INFO)
+        # add logger handler to logger
+        self.logger.handlers = []
+        self.logger.addHandler(STREAM_HANDLER)
+        self.logger.addHandler(FILE_HANDLER_PV)
 
     def calibrate(self):
         time.sleep(0.5)
@@ -61,26 +72,30 @@ class CarrierDetection(object):
 
             if exspected == 'entrance':
                 if baseLevelHeight - self.distanceExit > 10:
-                    print("[CARRIERDETECTION] Detected carrier on exit")
+                    self.logger.info(
+                        "[CARRIERDETECTION] Detected carrier on exit")
                     isExpected = False
                     break
                 if baseLevelHeight - self.distanceEntrance > 10:
-                    print("[CARRIERDETECTION] Detected carrier on entrance")
+                    self.logger.info(
+                        "[CARRIERDETECTION] Detected carrier on entrance")
                     isExpected = True
                     break
             elif exspected == 'exit':
                 if baseLevelHeight - self.distanceEntrance > 10:
-                    print("[CARRIERDETECTION] Detected carrier on entrance")
+                    self.logger.info(
+                        "[CARRIERDETECTION] Detected carrier on entrance")
                     isExpected = False
                     break
                 if baseLevelHeight - self.distanceExit > 10:
                     isExpected = True
-                    print("[CARRIERDETECTION] Detected carrier on exit")
+                    self.logger.info(
+                        "[CARRIERDETECTION] Detected carrier on exit")
                     break
             elif exspected == 'both':
                 if baseLevelHeight - self.distanceEntrance > 10 or baseLevelHeight - self.distanceExit > 10:
                     isExpected = True
-                    print("[CARRIERDETECTION] Detected carrier")
+                    self.logger.info("[CARRIERDETECTION] Detected carrier")
                     break
         GPIO.cleanup()
         return isExpected
@@ -99,7 +114,7 @@ class CarrierDetection(object):
             else:
                 self.detectedIntrusion = False
         self.stopFlag.clear()
-    
+
     def kill(self):
         self.stopFlag.set()
 

@@ -8,12 +8,9 @@ Short description: Module for providing the REST Interface
 """
 
 
-from flask_restful import Resource, reqparse, fields, marshal_with, abort
+from mesrequests import updateStateVisualisationUnit
 import socket
 import sys
-import os
-import requests
-from threading import Thread
 sys.path.append('.')
 sys.path.append('..')
 
@@ -54,7 +51,7 @@ if __name__ == "__main__":
     db.session.commit()
     # delete unfinished visualisation task from local database for initial state
     task = VisualisationTaskModel.query.filter_by(id=1)
-    if task.count() ==1:
+    if task.count() == 1:
         db.session.delete(task.first())
         db.session.commit()
     # delete stateworkingpiece from local database for initial state
@@ -77,18 +74,7 @@ if __name__ == "__main__":
         "assignedTask": assignedTask,
     }
     # send request to mes
-    try:
-        request = requests.post(
-            IP_MES+":8000/api/StateVisualisationUnit/", data=data)
-        if not request.ok:
-            # already exists => update it
-            request = requests.patch(
-                IP_MES+":8000/api/StateVisualisationUnit/" + str(state.boundToResourceID), data=data)
-            if not request.ok:
-                # error
-                pass
-    except Exception as e:
-        print(e)
+    updateStateVisualisationUnit(state.boundToResourceID, data)
 
     # ! In production change debug to false
     app.run(debug=True, host="0.0.0.0")

@@ -9,7 +9,16 @@ Short description: Common http requests to or from the mes
 
 
 import requests
-from constants import IP_MES
+import logging
+from constants import IP_MES, STREAM_HANDLER,  FILE_HANDLER_ERROR
+
+# setup logger
+errorLogger = logging.getLogger("error")
+errorLogger.setLevel(logging.warning)
+# add logger handler to logger
+errorLogger.handlers = []
+errorLogger.addHandler(STREAM_HANDLER)
+errorLogger.addHandler(FILE_HANDLER_ERROR)
 
 
 def sendError(msg, level="[WARNING]", category="Operational issue"):
@@ -23,9 +32,10 @@ def sendError(msg, level="[WARNING]", category="Operational issue"):
     try:
         request = requests.post(IP_MES+":8000/api/Error/", data=data)
         if not request.ok:
-            print(request.status_code)
+            errorLogger.warning("[MESREQUESTS] " + request.status_code)
     except Exception as e:
-        print("[PROCESSVISUALISATION] Couldn't send error to MES. Check Connection")
+        errorLogger.warning(
+            "[MESREQUESTS] Couldn't send error to MES. Check Connection")
 
 
 def getStateWorkingPiece(id):
@@ -50,7 +60,8 @@ def getStateWorkingPiece(id):
             db.session.add(stateWorkingPiece)
             db.session.commit()
     except Exception as e:
-        print(e)
+        errorLogger.warning(
+            "[MESREQUESTS] Couldn't get StateWorkingPiece from MES. Check Connection")
 
 
 def getStatePLC(id):
@@ -61,17 +72,23 @@ def getStatePLC(id):
             data = request.json()
             return data
     except Exception as e:
-        print(e)
+        errorLogger.warning(
+            "[MESREQUESTS] Couldn't get StatePLC from MES. Check Connection")
 
 
 def updateStateVisualisationUnit(id, data):
     try:
-        request = requests.patch(
-            IP_MES + ":8000/api/StateVisualisationUnit/" + str(id), data=data)
+        request = requests.post(
+            IP_MES+":8000/api/StateVisualisationUnit/", data=data)
         if not request.ok:
-            print(request.status_code)
+            # already exists => update it
+            request = requests.patch(
+                IP_MES+":8000/api/StateVisualisationUnit/" + id, data=data)
+            if not request.ok:
+                errorLogger.warning("[MESREQUESTS] " + request.status_code)
     except Exception as e:
-        print(e)
+        errorLogger.warning(
+            "[MESREQUESTS] Couldn't update StateVisualisationUnit in MES. Check Connection")
 
 
 def updateStateWorkingPiece(id, data):
@@ -79,6 +96,7 @@ def updateStateWorkingPiece(id, data):
         request = requests.patch(
             IP_MES + ":8000/api/StateWorkingPiece/" + str(id), data=data)
         if not request.ok:
-            print(request.status_code)
+            errorLogger.warning("[MESREQUESTS] " + request.status_code)
     except Exception as e:
-        print(e)
+        errorLogger.warning(
+            "[MESREQUESTS] Couldn't update StateWorkingPiece in MES. Check Connection")

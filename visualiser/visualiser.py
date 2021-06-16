@@ -10,20 +10,19 @@ import pygame  # nopep8
 import logging  # nopep8
 import time  # nopep8
 import sys  # nopep8
-sys.path.append('.')  # nopep8
-sys.path.append('..')  # nopep8
-
 from pygame.locals import *  # nopep8
 from OpenGL.GL import *  # nopep8
 from OpenGL.GLU import *  # nopep8
 from threading import Thread  # nopep8
+sys.path.append('.')  # nopep8
+sys.path.append('..')  # nopep8
 
 from .skyboy import Skybox  # nopep8
 from .package import PackageModel  # nopep8
 from .iaslogo import IASModel  # nopep8
 from .timer import Timer  # nopep8
+from api.constants import BASE_LEVEL_HEIGHT, STREAM_HANDLER, FILE_HANDLER_PV, FILE_HANDLER_ERROR  # nopep8
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8
-from api.constants import BASE_LEVEL_HEIGHT  # nopep8
 
 
 class Visualiser(object):
@@ -43,24 +42,18 @@ class Visualiser(object):
         self.color = '#CCCCCC'
         self.task = 'color'
 
-        # setup logging
-        log_formatter = logging.Formatter(
-            '[%(asctime)s ] %(message)s')
-        # handler for logging to file
-        file_handler = logging.FileHandler("processvisualisation.log")
-        file_handler.setFormatter(log_formatter)
-        file_handler.setLevel(logging.INFO)
-        # handler for logging to console
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(log_formatter)
-        stream_handler.setLevel(logging.INFO)
         # setup logger
         self.logger = logging.getLogger("visualiser")
         self.logger.setLevel(logging.INFO)
+        self.errorLogger = logging.getLogger("error")
+        self.errorLogger.setLevel(logging.warning)
         # add logger handler to logger
         self.logger.handlers = []
-        self.logger.addHandler(stream_handler)
-        self.logger.addHandler(file_handler)
+        self.logger.addHandler(STREAM_HANDLER)
+        self.logger.addHandler(FILE_HANDLER_PV)
+        self.errorLogger.handlers = []
+        self.errorLogger.addHandler(STREAM_HANDLER)
+        self.errorLogger.addHandler(FILE_HANDLER_ERROR)
 
     """
     Animations
@@ -185,13 +178,13 @@ class Visualiser(object):
                 if not timer.isPaused:
                     currentTime = timer.getTime()
                 elif timer.isPaused:
-                    self.logger.info(
+                    self.errorLogger.warning(
                         "[VISUALISER] Intrusion removed. Resuming process")
                     currentTime = timer.resume()
             else:
                 # detected intrusion, pausing timer
                 if not timer.isPaused:
-                    self.logger.info(
+                    self.errorLogger.warning(
                         "[VISUALISER] Detected intrusion. Pausing process")
                     currentTime = timer.pause()
             # draw models depending on task
