@@ -31,6 +31,8 @@ class Visualiser(object):
 
     def __init__(self):
         self.isKilled = False
+        self.movSpeed = 0.2
+        # 3d model params
         self.modelName = 'IAS-Logo'
         self.model = None
         # resolution to render
@@ -95,17 +97,17 @@ class Visualiser(object):
                 break
 
             self._enableGLFeatures(True)
-            # Move model 1 unit on x-axis
+            # Move model on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < -3:
-                glTranslatef(0.2, 0, 0)
+                glTranslatef(self.movSpeed, 0, 0)
 
             else:
                 hasReachedTarget = True
 
             # drawing
             skybox.ground()
-            self.animateModel()
+            self.drawModel()
             self._enableGLFeatures(False)
 
             pygame.display.flip()
@@ -128,10 +130,10 @@ class Visualiser(object):
             # Move model 0.05 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < 9:
-                glTranslatef(0.2, 0, 0)
+                glTranslatef(self.movSpeed, 0, 0)
             else:
                 hasReachedTarget = True
-            self.animateModel()
+            self.drawModel()
             self._enableGLFeatures(False)
             skybox.ground()
             pygame.display.flip()
@@ -143,27 +145,36 @@ class Visualiser(object):
     def displayProcessVisualisation(self):
         print("[VISUALISER] Display processvisualisation")
         DRY_TIME = 3
+        # load skybox
         skybox = Skybox()
         texture_id = skybox.loadTexture()
         finished = False
+        # setup timer and intrusiondetection
         timer = Timer()
         carrierDetection = CarrierDetection()
-        Thread(target= carrierDetection.checkForIntrusion, args=[BASE_LEVEL_HEIGHT]).start()
+        Thread(target=carrierDetection.checkForIntrusion,
+               args=[BASE_LEVEL_HEIGHT]).start()
         timer.start()
         currentTime = 0
+
+        # drawing loop
         while not finished:
-            self._eventLoop(texture_id) 
+            self._eventLoop(texture_id)
             self._enableGLFeatures(True)
+            # check for object intrusion
             if not carrierDetection.detectedIntrusion:
+                # no intrusion, get timer time or resume timer
                 if not timer.isPaused:
                     currentTime = timer.getTime()
                 elif timer.isPaused:
                     print("[VISUALISER] Intrusion removed. Resuming process")
                     currentTime = timer.resume()
-            else:  
+            else:
+                # detected intrusion, pausing timer
                 if not timer.isPaused:
                     print("[VISUALISER] Detected intrusion. Pausing process")
                     currentTime = timer.pause()
+            # draw models depending on task
             if self.task == 'assemble':
                 if currentTime < 5:
                     self.model.assemble(currentTime)
@@ -206,22 +217,29 @@ class Visualiser(object):
             self._enableGLFeatures(False)
             pygame.display.flip()
             pygame.time.wait(30)
+        # kill intrusion detection thread
         carrierDetection.kill()
         time.sleep(0.3)
         return True
 
+    # animation of the task "color". It gets applied on a
+    # static 3d model
     def paint(self, currentTime):
         self.model.paintColor = self.paintColor
         self.model.setAlpha(0.2 * currentTime)
-        self.animateModel()
+        self.drawModel()
 
+    # animation of the task "unpackage". It gets applied on a
+    # static 3d model
     def unpackage(self, currentTime):
         PackageModel().unpackage(currentTime)
-        self.animateModel()
+        self.drawModel()
 
+    # animation of the task "package". It gets applied on a
+    # static 3d model
     def package(self, currentTime):
         PackageModel().package(currentTime)
-        self.animateModel()
+        self.drawModel()
 
     """
     utils
@@ -240,12 +258,12 @@ class Visualiser(object):
             self.model.setPackaged(self.isPackaged)
             self.model.setColor(self.color)
 
-    def animateModel(self):
+    def drawModel(self):
         if self.modelName == 'IAS-Logo':
-            self.model.animateModel()
+            self.model.drawModel()
         else:
             # IAS logo is standard model to be loaded
-            self.model.animateModel()
+            self.model.drawModel()
         return
 
     def initPygame(self):
@@ -264,7 +282,7 @@ class Visualiser(object):
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glBlendEquation(GL_FUNC_ADD)
 
-        #glEnable(GL_LIGHTING)
+        # glEnable(GL_LIGHTING)
         #glLight(GL_LIGHT0, GL_POSITION,  (0, 1, -7, 0))
         #glLightfv(GL_LIGHT0, GL_AMBIENT, (1, 1, 1, 1))
         #glLightfv(GL_LIGHT0, GL_DIFFUSE, (2, 2, 2, 1))
@@ -274,13 +292,13 @@ class Visualiser(object):
     def _enableGLFeatures(self, isEnabled):
         if isEnabled:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            #glEnable(GL_LIGHTING)
-            #glEnable(GL_LIGHT0)
+            # glEnable(GL_LIGHTING)
+            # glEnable(GL_LIGHT0)
             glEnable(GL_COLOR_MATERIAL)
             glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
         elif not isEnabled:
-            #glDisable(GL_LIGHT0)
-            #glDisable(GL_LIGHTING)
+            # glDisable(GL_LIGHT0)
+            # glDisable(GL_LIGHTING)
             glDisable(GL_COLOR_MATERIAL)
 
     def _eventLoop(self, texture_id):

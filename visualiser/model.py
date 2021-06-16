@@ -45,10 +45,40 @@ class Model(object):
         self.paintColor = paintColor
 
     """
+    animations
+    """
+
+    #! Need to be overridden
+    # Draw a static model (animation is applied in visualiser).
+    # Translate, rotate and scale the .obj-models to correct the initial position
+    # Apply self.staticcolor to parts which are protected from the "color"-task and
+    # self.color to parts which can be painted by the "color"- task
+    def drawModel(self):
+        pass
+
+    #! Need to be overridden
+    # Draw a model an apply a assemble animation to it. Each Model
+    # needs its own assemble animation (unlike package, unpackage and color which are applied to an static model).
+    # Animate with translations and rotations.
+    # @params:
+    # time: elapsed time of the workingprocess
+    def assemble(self, time):
+        pass
+
+    #! Need to be overridden
+    # Draw a model an apply a generic animation to it. Each Model
+    # needs its own assemble animation (unlike package, unpackage and color which are applied to an static model).
+    # Animate with translations and rotations.
+    # @params:
+    # time: elapsed time of the workingprocess
+    def generic(self, time):
+        pass
+
+    """
     utils
     """
-    # This Methods gets model data and creates a 3D model
 
+    # This Methods gets model data (vertices, faces etc. from the .obj file) and creates a 3D model
     def _drawModel(self, model, color):
         # calculating parameter
         scene_box = (model.vertices[0], model.vertices[0])
@@ -76,6 +106,7 @@ class Model(object):
             glDisable(GL_COLOR_MATERIAL)
         glPopMatrix()
 
+    # convert hex color values to rgb values
     def _hexToRGB(self, hex):
         colorRGBBin = tuple(int(hex[i:i+2], 16) for i in (1, 3, 5))
         colorRGBFloat = tuple(color / 255. for color in colorRGBBin)

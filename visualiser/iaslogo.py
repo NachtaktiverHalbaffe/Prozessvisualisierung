@@ -46,7 +46,7 @@ class IASModel(Model):
     """
     # draws model with right state
 
-    def animateModel(self):
+    def drawModel(self):
         if not self.isPackaged:
             for i in range(len(self.models)):
                 if i == 0:
@@ -81,12 +81,13 @@ class IASModel(Model):
                             float(colorRGB[i] * (1-self.alpha)) for i in range(len(colorRGB)))
                         paintColorRGB = tuple(
                             float(paintColorRGB[i] * self.alpha) for i in range(len(paintColorRGB)))
-                        color = tuple(abs(float(colorRGB[i]+ paintColorRGB[i])) for i in range(len(colorRGB)))
+                        color = tuple(
+                            abs(float(colorRGB[i] + paintColorRGB[i])) for i in range(len(colorRGB)))
                         self._drawModel(self.models[i], color)
                     elif self.paintColor == '#000000':
                         glColor3d(colorRGB[0], colorRGB[1],
                                   colorRGB[2])
-                        self._drawModel(self.models[i], colorRGB)  
+                        self._drawModel(self.models[i], colorRGB)
                     glDisable(GL_COLOR_MATERIAL)
                     glPopMatrix()
                 elif i == 2:
@@ -145,7 +146,7 @@ class IASModel(Model):
                 glDisable(GL_COLOR_MATERIAL)
                 glPopMatrix()
 
-    # animates the generic task
+    # animates the generic task. In this case its a disassembly of the logo
     def generic(self, time):
         for i in range(len(self.models)):
             if i == 0:
