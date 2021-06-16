@@ -36,16 +36,20 @@ if __name__ == "__main__":
 
     # update state
     state = StateModel.query.filter_by(id=1).first()
+    # use dummy socket and connect to non existing ip to ensure to get right ip adress
+    testSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    testSock.connect(("10.255.255.255",1))
+    ipAdress = testSock.getsockname()[0]
     if not state:
         state = StateModel(
             id=1,
-            ipAdress=socket.gethostbyname(socket.gethostname()),
+            ipAdress=ipAdress,
             baseLevelHeight=calibrater.baseLevel,
             boundToResourceID=0,
             state="idle")
     else:
         state.id = 1
-        state.ipAdress = socket.gethostbyname(socket.gethostname())
+        state.ipAdress = ipAdress
         state.baseLevelHeight = calibrater.baseLevel
     db.session.add(state)
     db.session.commit()
