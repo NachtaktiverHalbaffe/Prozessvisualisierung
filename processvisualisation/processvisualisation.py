@@ -7,8 +7,8 @@ Short description: Module for handling processvisualisation
 
 """
 
-from api.mesrequests import sendError, getStateWorkingPiece, updateStateVisualisationUnit, updateStateWorkingPiece, getStatePLC
 from threading import Thread, Event
+import logging
 import pygame
 import time
 import sys
@@ -16,6 +16,7 @@ import requests
 sys.path.append('.')
 sys.path.append('..')
 
+from api.mesrequests import sendError, getStateWorkingPiece, updateStateVisualisationUnit, updateStateWorkingPiece, getStatePLC  # nopep8
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8
 from visualiser.visualiser import Visualiser  # nopep8
 from api.constants import IP_MES  # nopep8
@@ -38,12 +39,32 @@ class ProcessVisualisation(object):
         self.pvStopFlag = Event()
         self.pvStopFlag.clear()
 
+        # setup logging
+        log_formatter = logging.Formatter(
+            '[%(asctime)s ] %(name)s : %(message)s')
+        # handler for logging to file
+        file_handler = logging.FileHandler("processvisualisation.log")
+        file_handler.setFormatter(log_formatter)
+        file_handler.setLevel(logging.INFO)
+        # handler for logging to console
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(log_formatter)
+        stream_handler.setLevel(logging.INFO)
+        # setup logger
+        self.logger = logging.getLogger("processvisuision")
+        self.logger.setLevel(logging.INFO)
+        # add logger handler to logger
+        self.logger.handlers = []
+        self.logger.addHandler(stream_handler)
+        self.logger.addHandler(file_handler)
+
     # Handles the process of executing a visualisation task
+
     def executeOrder(self):
         from api.settings import visualiser
 
         # get parameter for task and setup visualiser
-        print("[PROCESSVISUALISATION] Visualisation startet.")
+        self.logger.info("[PROCESSVISUALISATION] Visualisation startet.")
         self.updateOrder()
         visualiser.killVisualiser()
         self.pvStopFlag.clear()
@@ -72,7 +93,7 @@ class ProcessVisualisation(object):
                     Thread(target=self._updateState, args=["playing"]).start()
                     # update state of workingpiece
                     getStateWorkingPiece(self.assignedWorkingPiece)
-                    print(
+                    self.logger.info(
                         "[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
                     visualiser.displayIncomingCarrier()
                     break
@@ -80,13 +101,13 @@ class ProcessVisualisation(object):
                     errorCounter += 1
                     if errorCounter <= 3:
                         # repeating carrierdetection
-                        print(
+                        self.logger.info(
                             "[PROCESSVISUALISATION] Detected Carrier in exit, but expected it on entrance")
                         sendError(
                             msg="Detected Carrier in exit, but expected it on entrance. Resetting carrierdetection")
                     else:
                         # aborting visualisation task cause it detected too often the carrier on the exit
-                        print(
+                        self.logger.info(
                             "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         sendError(level="[ERROR]",
                                   msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
@@ -113,7 +134,7 @@ class ProcessVisualisation(object):
                     # update parameter if task is finished
                     Thread(target=self._updatePar).start()
             else:
-                print(
+                self.logger.info(
                     "[PROCESSVISUALISATION] Resource isnt executing task. Assuming detected carrier hasnt a assigned task")
                 Thread(target=self._updateState, args=["finished"]).start()
         else:
@@ -136,13 +157,13 @@ class ProcessVisualisation(object):
                     errorCounter += 1
                     if errorCounter <= 3:
                         # repeating carrierdetection
-                        print(
+                        self.logger.info(
                             "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
                         sendError(
                             msg="Detected Carrier in entrance, but expected it on exit. Resetting carrierdetection")
                     else:
                         # aborting visualisation task cause it detected too often the carrier on the entrance
-                        print(
+                        self.logger.info(
                             "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
                         sendError(level="[ERROR]",
                                   msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
@@ -166,7 +187,8 @@ class ProcessVisualisation(object):
         """
         displayIdleThread = Thread(target=self._idleAnimation)
         displayIdleThread.start()
-        print("[PROCESSVISUALISATION] Carrier leaved the unit. Visualisation ended.")
+        self.logger.info(
+            "[PROCESSVISUALISATION] Carrier leaved the unit. Visualisation ended.")
 
     def updateOrder(self):
         from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8

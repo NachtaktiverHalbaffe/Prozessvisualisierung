@@ -6,25 +6,24 @@ Short description: Module for visualisation output
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
+import pygame  # nopep8
+import logging  # nopep8
+import time  # nopep8
+import sys  # nopep8
+sys.path.append('.')  # nopep8
+sys.path.append('..')  # nopep8
 
-import pywavefront
-import OpenGL
-import pygame
-from pygame.locals import *
-from OpenGL.GL import *
-from OpenGL.GLU import *
-from threading import Thread
+from pygame.locals import *  # nopep8
+from OpenGL.GL import *  # nopep8
+from OpenGL.GLU import *  # nopep8
+from threading import Thread  # nopep8
 
-from .skyboy import Skybox
-from .package import PackageModel
-from .iaslogo import IASModel
-from .timer import Timer
-from carrierdetection.carrierdetection import CarrierDetection
-from api.constants import BASE_LEVEL_HEIGHT
-import time
-import sys
-sys.path.append('.')
-sys.path.append('..')
+from .skyboy import Skybox  # nopep8
+from .package import PackageModel  # nopep8
+from .iaslogo import IASModel  # nopep8
+from .timer import Timer  # nopep8
+from carrierdetection.carrierdetection import CarrierDetection  # nopep8
+from api.constants import BASE_LEVEL_HEIGHT  # nopep8
 
 
 class Visualiser(object):
@@ -44,12 +43,31 @@ class Visualiser(object):
         self.color = '#CCCCCC'
         self.task = 'color'
 
+        # setup logging
+        log_formatter = logging.Formatter(
+            '[%(asctime)s ] %(name)s : %(message)s')
+        # handler for logging to file
+        file_handler = logging.FileHandler("processvisualisation.log")
+        file_handler.setFormatter(log_formatter)
+        file_handler.setLevel(logging.INFO)
+        # handler for logging to console
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(log_formatter)
+        stream_handler.setLevel(logging.INFO)
+        # setup logger
+        self.logger = logging.getLogger("visualiser")
+        self.logger.setLevel(logging.INFO)
+        # add logger handler to logger
+        self.logger.handlers = []
+        self.logger.addHandler(stream_handler)
+        self.logger.addHandler(file_handler)
+
     """
     Animations
     """
 
     def displayIdle(self):
-        print("[VISUALISATION] Display idle")
+        self.logger.info("[VISUALISATION] Display idle")
         skybox = Skybox()
         texture_id = skybox.loadTexture()
         # drawing loop
@@ -68,7 +86,7 @@ class Visualiser(object):
         return True
 
     def displayIdleStill(self):
-        print("[VISUALISATION] Display idle")
+        self.logger.info("[VISUALISATION] Display idle")
         skybox = Skybox()
         texture_id = skybox.loadTexture()
 
@@ -83,7 +101,7 @@ class Visualiser(object):
         return True
 
     def displayIncomingCarrier(self):
-        print("[VISUALISATION] Display incoming carrier")
+        self.logger.info("[VISUALISATION] Display incoming carrier")
         skybox = Skybox()
         texture_id = skybox.loadTexture()
         hasReachedTarget = False
@@ -117,7 +135,7 @@ class Visualiser(object):
         return True
 
     def displayOutgoingCarrier(self):
-        print("[VISUALISATION] Display outgoing carrier")
+        self.logger.info("[VISUALISATION] Display outgoing carrier")
         skybox = Skybox()
         texture_id = skybox.loadTexture()
         hasReachedTarget = False
@@ -143,7 +161,7 @@ class Visualiser(object):
         return True
 
     def displayProcessVisualisation(self):
-        print("[VISUALISER] Display processvisualisation")
+        self.logger.info("[VISUALISER] Display processvisualisation")
         DRY_TIME = 3
         # load skybox
         skybox = Skybox()
@@ -167,12 +185,14 @@ class Visualiser(object):
                 if not timer.isPaused:
                     currentTime = timer.getTime()
                 elif timer.isPaused:
-                    print("[VISUALISER] Intrusion removed. Resuming process")
+                    self.logger.info(
+                        "[VISUALISER] Intrusion removed. Resuming process")
                     currentTime = timer.resume()
             else:
                 # detected intrusion, pausing timer
                 if not timer.isPaused:
-                    print("[VISUALISER] Detected intrusion. Pausing process")
+                    self.logger.info(
+                        "[VISUALISER] Detected intrusion. Pausing process")
                     currentTime = timer.pause()
             # draw models depending on task
             if self.task == 'assemble':
