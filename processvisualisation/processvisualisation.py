@@ -7,7 +7,7 @@ Short description: Module for handling processvisualisation
 
 """
 
-from api.mesrequests import sendError, getStateWorkingPiece, updateStateVisualisationUnit, updateStateWorkingPiece
+from api.mesrequests import sendError, getStateWorkingPiece, updateStateVisualisationUnit, updateStateWorkingPiece, getStatePLC
 from threading import Thread, Event
 import pygame
 import time
@@ -55,7 +55,6 @@ class ProcessVisualisation(object):
         """
         Incoming carrier
         """
-        print(self.pvStopFlag.is_set())
         if not self.pvStopFlag.is_set():
             self._updateStateWorkingPiece()
             Thread(target=self._updateState, args=["waiting"]).start()
@@ -67,7 +66,6 @@ class ProcessVisualisation(object):
             return
         errorCounter = 0
         while True:
-            print(self.pvStopFlag.is_set())
             if not self.pvStopFlag.is_set():
                 if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
                     # display incoming carrier
@@ -103,19 +101,27 @@ class ProcessVisualisation(object):
         """
         process itself
         """
-        print(self.pvStopFlag.is_set())
         if not self.pvStopFlag.is_set():
-            self.updateOrder()
-            Thread(target=self._updateStateWorkingPiece).start()
-            visualiser.displayProcessVisualisation()
-            Thread(target=self._updateState, args=["finished"]).start()
-            # update parameter if task is finished
-            Thread(target=self._updatePar).start()
+            # check if workingstation is busy
+            data = getStatePLC(self.boundToResource)
+            # only display visualisation if bound resource is also busy
+            if data["state"] == "busy":
+                self.updateOrder()
+                Thread(target=self._updateStateWorkingPiece).start()
+                visualiser.displayProcessVisualisation()
+                Thread(target=self._updateState, args=["finished"]).start()
+                # update parameter if task is finished
+                Thread(target=self._updatePar).start()
+            else:
+                print(
+                    "[PROCESSVISUALISATION] Resource isnt executing task. Assuming detected carrier hasnt a assigned task")
+                Thread(target=self._updateState, args=["finished"]).start()
         else:
             visualiser.displayIdleStill()
             Thread(target=self._idleAnimation).start()
             self.pvStopFlag.clear()
             return
+
         """
         outgoing carrier
         """

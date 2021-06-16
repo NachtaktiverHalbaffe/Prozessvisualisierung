@@ -52,6 +52,18 @@ def getStateWorkingPiece(id):
     except Exception as e:
         print(e)
 
+
+def getStatePLC(id):
+    try:
+        request = requests.get(
+            IP_MES + ":8000/api/StatePLC/" + str(id))
+        if request.ok:
+            data = request.json()
+            return data
+    except Exception as e:
+        print(e)
+
+
 def updateStateVisualisationUnit(id, data):
     try:
         request = requests.patch(
@@ -59,7 +71,8 @@ def updateStateVisualisationUnit(id, data):
         if not request.ok:
             print(request.status_code)
     except Exception as e:
-            print(e)
+        print(e)
+
 
 def updateStateWorkingPiece(id, data):
     try:
@@ -68,4 +81,4 @@ def updateStateWorkingPiece(id, data):
         if not request.ok:
             print(request.status_code)
     except Exception as e:
-            print(e)
+        print(e)
