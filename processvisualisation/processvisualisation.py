@@ -106,7 +106,7 @@ class ProcessVisualisation(object):
                         self.errorLogger.error(
                             "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         sendError(level="[ERROR]",
-                                  msg="[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
+                                  msg="Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         visualiser.displayIdleStill()
                         Thread(target=self._idleAnimation).start()
                         self._cleanup()
@@ -136,7 +136,7 @@ class ProcessVisualisation(object):
                     self.errorLogger.error(
                         "[PROCESSVISUALISATION] Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
                     sendError(level="[ERROR]",
-                              msg="[PROCESSVISUALISATION] Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
+                              msg="Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
             else:
                 self.errorLogger.warning(
                     "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
