@@ -148,20 +148,22 @@ class Visualiser(object):
         finished = False
         timer = Timer()
         carrierDetection = CarrierDetection()
+        Thread(target= carrierDetection.checkForIntrusion, args=[BASE_LEVEL_HEIGHT]).start()
         timer.start()
+        currentTime = 0
         while not finished:
-            self._eventLoop(texture_id)
-            carrierDetection.checkForIntrusion(BASE_LEVEL_HEIGHT)
+            self._eventLoop(texture_id) 
             self._enableGLFeatures(True)
             if not carrierDetection.detectedIntrusion:
-                if timer.isPaused:
+                if not timer.isPaused:
                     currentTime = timer.getTime()
-                else:
-                    timer.resume()
-                    currentTime = timer.getTime()
-            else:
-                timer.pause()
-                currentTime = timer.getTime()
+                elif timer.isPaused:
+                    print("[VISUALISER] Intrusion removed. Resuming process")
+                    currentTime = timer.resume()
+            else:  
+                if not timer.isPaused:
+                    print("[VISUALISER] Detected intrusion. Pausing process")
+                    currentTime = timer.pause()
             if self.task == 'assemble':
                 if currentTime < 5:
                     self.model.assemble(currentTime)
@@ -204,6 +206,8 @@ class Visualiser(object):
             self._enableGLFeatures(False)
             pygame.display.flip()
             pygame.time.wait(30)
+        carrierDetection.kill()
+        time.sleep(0.3)
         return True
 
     def paint(self, currentTime):
@@ -260,9 +264,9 @@ class Visualiser(object):
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glBlendEquation(GL_FUNC_ADD)
 
-        glEnable(GL_LIGHTING)
-        glLight(GL_LIGHT0, GL_POSITION,  (0, 1, -7, 0))
-        glLightfv(GL_LIGHT0, GL_AMBIENT, (1, 1, 1, 1))
+        #glEnable(GL_LIGHTING)
+        #glLight(GL_LIGHT0, GL_POSITION,  (0, 1, -7, 0))
+        #glLightfv(GL_LIGHT0, GL_AMBIENT, (1, 1, 1, 1))
         #glLightfv(GL_LIGHT0, GL_DIFFUSE, (2, 2, 2, 1))
         #glLight(GL_LIGHT0, GL_POSITION, (0, .5, 1))
         glEnable(GL_COLOR_MATERIAL)
@@ -270,13 +274,13 @@ class Visualiser(object):
     def _enableGLFeatures(self, isEnabled):
         if isEnabled:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_LIGHTING)
-            glEnable(GL_LIGHT0)
+            #glEnable(GL_LIGHTING)
+            #glEnable(GL_LIGHT0)
             glEnable(GL_COLOR_MATERIAL)
             glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
         elif not isEnabled:
-            glDisable(GL_LIGHT0)
-            glDisable(GL_LIGHTING)
+            #glDisable(GL_LIGHT0)
+            #glDisable(GL_LIGHTING)
             glDisable(GL_COLOR_MATERIAL)
 
     def _eventLoop(self, texture_id):

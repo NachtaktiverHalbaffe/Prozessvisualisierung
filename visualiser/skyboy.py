@@ -33,7 +33,7 @@ class Skybox(object):
         )
 
         glDisable(GL_BLEND)
-        glEnable(GL_LIGHTING)
+        #glEnable(GL_LIGHTING)
         glEnable(GL_COLOR_MATERIAL)
         glEnable(GL_TEXTURE_2D)
 
@@ -52,7 +52,7 @@ class Skybox(object):
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
         glDisable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
-        glDisable(GL_LIGHTING)
+        #glDisable(GL_LIGHTING)
         glDisable(GL_COLOR_MATERIAL)
 
     def loadTexture(self):

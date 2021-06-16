@@ -18,9 +18,9 @@ class Timer:
         self.startTime = time.time()
 
     def pause(self):
-        self.currentTime = time.time() - self.startTime
-        self.cancelTime = self.currentTime
         self.isPaused = True
+        self.currentTime = self.getTime()
+        self.cancelTime = self.currentTime
         return self.currentTime
 
     def getTime(self):
@@ -31,5 +31,7 @@ class Timer:
         return self.currentTime
 
     def resume(self):
-        self.starTime = time.time()
         self.isPaused = False
+        self.startTime = time.time()
+        self.currentTime = time.time() - self.startTime + self.cancelTime
+        return self.currentTime

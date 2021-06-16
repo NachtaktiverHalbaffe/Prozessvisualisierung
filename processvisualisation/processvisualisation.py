@@ -108,10 +108,10 @@ class ProcessVisualisation(object):
             if data["state"] == "busy":
                 self.updateOrder()
                 Thread(target=self._updateStateWorkingPiece).start()
-                visualiser.displayProcessVisualisation()
-                Thread(target=self._updateState, args=["finished"]).start()
-                # update parameter if task is finished
-                Thread(target=self._updatePar).start()
+                if visualiser.displayProcessVisualisation():
+                    Thread(target=self._updateState, args=["finished"]).start()
+                    # update parameter if task is finished
+                    Thread(target=self._updatePar).start()
             else:
                 print(
                     "[PROCESSVISUALISATION] Resource isnt executing task. Assuming detected carrier hasnt a assigned task")

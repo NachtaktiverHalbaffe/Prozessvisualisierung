@@ -8,7 +8,7 @@ Short description: Module for detecting the carrier with ultrasonic sensor
 """
 import RPi.GPIO as GPIO
 import time
-from threading import Thread
+from threading import Thread, Event
 
 
 class CarrierDetection(object):
@@ -18,6 +18,8 @@ class CarrierDetection(object):
         self.distanceExit = 0.0
         self.baseLevel = 0.0
         self.detectedIntrusion = False
+        self.stopFlag = Event()
+        self.stopFlag.clear()
         # setup sensors
         self.GPIO_TRIGGER_1 = 23  # entrance
         self.GPIO_TRIGGER_2 = 16  # exit
@@ -31,9 +33,9 @@ class CarrierDetection(object):
         GPIO.setup(self.GPIO_ECHO_2, GPIO.IN)
 
     def calibrate(self):
-        time.sleep(1)
+        time.sleep(0.5)
         self._measureExit()
-        time.sleep(1)
+        time.sleep(0.5)
         self._measureEntrance()
         if abs(self.distanceEntrance - self.distanceExit) < 6:
             GPIO.cleanup()
@@ -87,15 +89,19 @@ class CarrierDetection(object):
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
         baseLevelHeight = float(baseLevelHeight)
-        self._measureEntrance()
-        time.sleep(0.01)
-        self._measureExit()
-        if baseLevelHeight - self.distanceExit > 10 or baseLevelHeight - self.distanceEntrance > 10:
-            self.detectedIntrusion = True
-            return
-        else:
-            self.detectedIntrusion = False
-            return
+        while not self.stopFlag.isSet():
+            time.sleep(0.3)
+            self._measureEntrance()
+            time.sleep(0.3)
+            self._measureExit()
+            if baseLevelHeight - self.distanceExit > 10 or baseLevelHeight - self.distanceEntrance > 10:
+                self.detectedIntrusion = True
+            else:
+                self.detectedIntrusion = False
+        self.stopFlag.clear()
+    
+    def kill(self):
+        self.stopFlag.set()
 
     def _measureEntrance(self):
         GPIO.output(self.GPIO_TRIGGER_1, True)
