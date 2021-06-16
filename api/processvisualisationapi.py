@@ -53,13 +53,15 @@ if __name__ == "__main__":
     db.session.add(state)
     db.session.commit()
     # delete unfinished visualisation task from local database for initial state
-    task = VisualisationTaskModel.query.filter_by(id=1).first()
-    db.session.delete(task)
-    db.session.commit()
+    task = VisualisationTaskModel.query.filter_by(id=1)
+    if task.count() ==1:
+        db.session.delete(task.first())
+        db.session.commit()
     # delete stateworkingpiece from local database for initial state
-    workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
-    db.session.delete(workingPiece)
-    db.session.commit()
+    workingPiece = StateWorkingPieceModel.query.filter_by(id=1)
+    if workingPiece.count() == 1:
+        db.session.delete(workingPiece.first())
+        db.session.commit()
 
     # send initial state to mes
     if VisualisationTaskModel.query.filter_by(id=1).first():
