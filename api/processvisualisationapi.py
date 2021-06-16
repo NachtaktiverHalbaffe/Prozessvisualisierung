@@ -52,6 +52,14 @@ if __name__ == "__main__":
         state.baseLevelHeight = calibrater.baseLevel
     db.session.add(state)
     db.session.commit()
+    # delete unfinished visualisation task from local database for initial state
+    task = VisualisationTaskModel.query.filter_by(id=1).first()
+    db.session.delete(task)
+    db.session.commit()
+    # delete stateworkingpiece from local database for initial state
+    workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
+    db.session.delete(workingPiece)
+    db.session.commit()
 
     # send initial state to mes
     if VisualisationTaskModel.query.filter_by(id=1).first():
