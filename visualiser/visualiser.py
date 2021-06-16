@@ -18,6 +18,7 @@ from threading import Thread
 from .skyboy import Skybox
 from .package import PackageModel
 from .iaslogo import IASModel
+from .timer import Timer
 from carrierdetection.carrierdetection import CarrierDetection
 from api.constants import BASE_LEVEL_HEIGHT
 import time
@@ -145,16 +146,22 @@ class Visualiser(object):
         skybox = Skybox()
         texture_id = skybox.loadTexture()
         finished = False
-        timeStart = time.time()
+        timer = Timer()
         carrierDetection = CarrierDetection()
-
+        timer.start()
         while not finished:
             self._eventLoop(texture_id)
             carrierDetection.checkForIntrusion(BASE_LEVEL_HEIGHT)
             self._enableGLFeatures(True)
             if not carrierDetection.detectedIntrusion:
-                currentTime = time.time() - timeStart
-            
+                if timer.isPaused:
+                    currentTime = timer.getTime()
+                else:
+                    timer.resume()
+                    currentTime = timer.getTime()
+            else:
+                timer.pause()
+                currentTime = timer.getTime()
             if self.task == 'assemble':
                 if currentTime < 5:
                     self.model.assemble(currentTime)
