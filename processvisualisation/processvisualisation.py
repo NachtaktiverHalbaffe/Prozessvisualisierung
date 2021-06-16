@@ -41,7 +41,7 @@ class ProcessVisualisation(object):
 
         # setup logging
         log_formatter = logging.Formatter(
-            '[%(asctime)s ] %(name)s : %(message)s')
+            '[%(asctime)s ] %(message)s')
         # handler for logging to file
         file_handler = logging.FileHandler("processvisualisation.log")
         file_handler.setFormatter(log_formatter)
