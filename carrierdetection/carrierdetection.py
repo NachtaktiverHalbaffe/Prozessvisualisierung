@@ -86,17 +86,14 @@ class CarrierDetection(object):
     def checkForIntrusion(self, baseLevelHeight):
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
+        baseLevelHeight = float(baseLevelHeight)
         self._measureEntrance()
-        time.sleep(0.05)
+        time.sleep(0.01)
         self._measureExit()
-        print(baseLevelHeight)
-
         if baseLevelHeight - self.distanceExit > 10 or baseLevelHeight - self.distanceEntrance > 10:
-            GPIO.cleanup()
             self.detectedIntrusion = True
             return
         else:
-            GPIO.cleanup()
             self.detectedIntrusion = False
             return
 
