@@ -17,11 +17,12 @@ class CarrierDetection(object):
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
         self.baseLevel = 0.0
+        self.detectedIntrusion = False
         # setup sensors
         self.GPIO_TRIGGER_1 = 23  # entrance
         self.GPIO_TRIGGER_2 = 16  # exit
         self.GPIO_ECHO_1 = 24  # entrance
-        self.GPIO_ECHO_2 = 18 # exit
+        self.GPIO_ECHO_2 = 18  # exit
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         GPIO.setup(self.GPIO_TRIGGER_1, GPIO.OUT)
@@ -55,10 +56,10 @@ class CarrierDetection(object):
             self._measureEntrance()
             time.sleep(0.1)
             self._measureExit()
-            
+
             if exspected == 'entrance':
                 if baseLevelHeight - self.distanceExit > 10:
-                    print("[CARRIERDETECTION] Detected carrier on exit" )
+                    print("[CARRIERDETECTION] Detected carrier on exit")
                     isExpected = False
                     break
                 if baseLevelHeight - self.distanceEntrance > 10:
@@ -82,6 +83,23 @@ class CarrierDetection(object):
         GPIO.cleanup()
         return isExpected
 
+    def checkForIntrusion(self, baseLevelHeight):
+        self.distanceEntrance = 0.0
+        self.distanceExit = 0.0
+        self._measureEntrance()
+        time.sleep(0.05)
+        self._measureExit()
+        print(baseLevelHeight)
+
+        if baseLevelHeight - self.distanceExit > 10 or baseLevelHeight - self.distanceEntrance > 10:
+            GPIO.cleanup()
+            self.detectedIntrusion = True
+            return
+        else:
+            GPIO.cleanup()
+            self.detectedIntrusion = False
+            return
+
     def _measureEntrance(self):
         GPIO.output(self.GPIO_TRIGGER_1, True)
         time.sleep(0.00002)
@@ -94,7 +112,6 @@ class CarrierDetection(object):
         # distance = (delta_time * schallgeschw.)/ 2
         self.distanceEntrance = ((time_end - time_start) * 34300) / 2
 
-
     def _measureExit(self):
         GPIO.output(self.GPIO_TRIGGER_2, True)
         time.sleep(0.00002)
@@ -106,4 +123,3 @@ class CarrierDetection(object):
         # the measured distance is output in cm
         # distance = (delta_time * schallgeschw.)/ 2
         self.distanceExit = ((time_end - time_start) * 34300) / 2
-

@@ -21,7 +21,7 @@ from models import *  # nopep8
 from resources import *  # nopep8
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8 # nopep8
 from settings import db, app, api  # nopep8
-from constants import IP_MES  # nopep8
+from constants import IP_MES, BASE_LEVEL_HEIGHT  # nopep8
 
 api.add_resource(APIOverview, '/api')
 api.add_resource(StateUnit, '/api/StateUnit')
@@ -35,7 +35,9 @@ if __name__ == "__main__":
     # db.create_all()
     calibrater = CarrierDetection()
     calibrater.calibrate()
+    BASE_LEVEL_HEIGHT = calibrater.baseLevel
 
+    # update state
     state = StateModel.query.filter_by(id=1).first()
     if not state:
         state = StateModel(

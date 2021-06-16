@@ -13,9 +13,13 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from threading import Thread
+
 from .skyboy import Skybox
 from .package import PackageModel
 from .iaslogo import IASModel
+from carrierdetection.carrierdetection import CarrierDetection
+from api.constants import BASE_LEVEL_HEIGHT
 import time
 import sys
 sys.path.append('.')
@@ -56,10 +60,10 @@ class Visualiser(object):
             skybox.ground()
             self._enableGLFeatures(False)
             pygame.display.flip()
-            #pygame.time.wait(40)
+            # pygame.time.wait(40)
 
         return True
-    
+
     def displayIdleStill(self):
         print("[VISUALISATION] Display idle")
         skybox = Skybox()
@@ -142,49 +146,54 @@ class Visualiser(object):
         texture_id = skybox.loadTexture()
         finished = False
         timeStart = time.time()
+        carrierDetection = CarrierDetection()
 
         while not finished:
             self._eventLoop(texture_id)
+            Thread(target=carrierDetection.checkForIntrusion,
+                   args=[BASE_LEVEL_HEIGHT]).start()
+
             self._enableGLFeatures(True)
             currentTime = time.time() - timeStart
-            if self.task == 'assemble':
-                if currentTime < 5:
-                    self.model.assemble(currentTime)
-                else:
-                    finished = True
-                    self.setIsAssembled(True)
-                    self.model.assemble(currentTime)
-            elif self.task == 'color':
-                if currentTime < 5:
-                    self.paint(currentTime)
-                elif currentTime < 5 + DRY_TIME:
-                    self.paint(5)
-                else:
-                    finished = True
-                    self.model.setColor(self.paintColor)
-                    self.paint(currentTime)
-            elif self.task == 'package':
-                if currentTime < 5:
-                    self.package(currentTime)
-                else:
-                    finished = True
-                    self.package(currentTime)
-                    self.setIsPackaged(True)
-            elif self.task == 'unpackage':
-                self.setIsPackaged(False)
-                if currentTime < 5:
-                    self.unpackage(currentTime)
-                else:
-                    finished = True
-                    self.unpackage(currentTime)
+            if not carrierDetection.detectedIntrusion:
+                if self.task == 'assemble':
+                    if currentTime < 5:
+                        self.model.assemble(currentTime)
+                    else:
+                        finished = True
+                        self.setIsAssembled(True)
+                        self.model.assemble(currentTime)
+                elif self.task == 'color':
+                    if currentTime < 5:
+                        self.paint(currentTime)
+                    elif currentTime < 5 + DRY_TIME:
+                        self.paint(5)
+                    else:
+                        finished = True
+                        self.model.setColor(self.paintColor)
+                        self.paint(currentTime)
+                elif self.task == 'package':
+                    if currentTime < 5:
+                        self.package(currentTime)
+                    else:
+                        finished = True
+                        self.package(currentTime)
+                        self.setIsPackaged(True)
+                elif self.task == 'unpackage':
                     self.setIsPackaged(False)
-            elif self.task == 'generic':
-                if currentTime < 5:
-                    self.model.generic(currentTime)
-                else:
-                    finished = True
-                    self.model.generic(currentTime)
-                    self.setIsAssembled(False)
+                    if currentTime < 5:
+                        self.unpackage(currentTime)
+                    else:
+                        finished = True
+                        self.unpackage(currentTime)
+                        self.setIsPackaged(False)
+                elif self.task == 'generic':
+                    if currentTime < 5:
+                        self.model.generic(currentTime)
+                    else:
+                        finished = True
+                        self.model.generic(currentTime)
+                        self.setIsAssembled(False)
             skybox.ground()
             self._enableGLFeatures(False)
             pygame.display.flip()
@@ -231,7 +240,7 @@ class Visualiser(object):
 
     def initPygame(self):
         pygame.init()
-        pygame.display.set_mode(self.display, FULLSCREEN |DOUBLEBUF | OPENGL)
+        pygame.display.set_mode(self.display, FULLSCREEN | DOUBLEBUF | OPENGL)
         # set camera perspektive
         gluPerspective(60, (self.display[0] / self.display[1]), 1, 500.0)
         glTranslatef(-15, -2, -5)
@@ -285,22 +294,22 @@ class Visualiser(object):
 
     def setIsAssembled(self, isAssembled):
         self.isAssembled = isAssembled
-        if self.model != None :
+        if self.model != None:
             self.model.setAssembled(isAssembled)
 
     def setIsPackaged(self, isPackaged):
         self.isPackaged = isPackaged
-        if self.model != None :
+        if self.model != None:
             self.model.setPackaged(isPackaged)
 
     def setColor(self, color):
         self.color = color
-        if self.model != None :
+        if self.model != None:
             self.model.setColor(color)
 
     def setPaintColor(self, paintColor):
         self.paintColor = paintColor
-        if self.model != None :
+        if self.model != None:
             self.model.setPaintColor(paintColor)
 
     def setModelName(self, name):
