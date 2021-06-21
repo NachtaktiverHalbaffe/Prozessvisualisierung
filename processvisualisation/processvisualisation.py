@@ -121,26 +121,44 @@ class ProcessVisualisation(object):
         process itself
         """
         if not self.pvStopFlag.is_set():
-            # check if workingstation is busy
-            data = getStatePLC(self.boundToResource)
-            # only display visualisation if bound resource is also busy
-            if data["state"] == "busy":
-                if self._validateTask():
-                    Thread(target=self._updateVisualiser).start()
-                    if visualiser.displayProcessVisualisation():
+            errorCounter = 0
+            while True:
+                # check if workingstation is busy
+                data = getStatePLC(self.boundToResource)
+                # only display visualisation if bound resource is also busy
+                if data["state"] == "busy":
+                    if self._validateTask():
+                        Thread(target=self._updateVisualiser).start()
+                        if visualiser.displayProcessVisualisation():
+                            Thread(target=self._updateState,
+                                   args=["finished"]).start()
+                            # update parameter if task is finished
+                            Thread(target=self._updatePar).start()
+                            break
+                    else:
+                        self.errorLogger.error(
+                            "[PROCESSVISUALISATION] Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
+                        sendError(level="[ERROR]",
+                                  msg="Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
+                        break
+                else:
+                    if errorCounter <= 3:
+                        errorCounter += 1
+                        self.errorLogger.warning(
+                            "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Retrying to poll state again in a second...")
+                        sendError(
+                            level="[WARNING]", msg="Bound resource under unit isnt executing a task. Retrying to poll state again in a second...")
+                        time.sleep(1)
+                        break
+
+                    else:
+                        self.errorLogger.error(
+                            "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
+                        sendError(
+                            level="[ERROR]", msg="Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
                         Thread(target=self._updateState,
                                args=["finished"]).start()
-                        # update parameter if task is finished
-                        Thread(target=self._updatePar).start()
-                else:
-                    self.errorLogger.error(
-                        "[PROCESSVISUALISATION] Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
-                    sendError(level="[ERROR]",
-                              msg="Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
-            else:
-                self.errorLogger.warning(
-                    "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
-                Thread(target=self._updateState, args=["finished"]).start()
+                        break
         else:
             visualiser.displayIdleStill()
             Thread(target=self._idleAnimation).start()
