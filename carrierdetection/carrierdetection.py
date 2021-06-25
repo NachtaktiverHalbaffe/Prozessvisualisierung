@@ -138,8 +138,13 @@ class CarrierDetection(object):
         GPIO.output(self.GPIO_TRIGGER_1, True)
         time.sleep(0.00002)
         GPIO.output(self.GPIO_TRIGGER_1, False)
+        echo_status_counter = 1
         while GPIO.input(self.GPIO_ECHO_1) == False:
-            time_start = time.time()
+                if echo_status_counter < 1000:
+                    time_start = time.time()
+                    echo_status_counter += 1
+                else:
+                    break       
         while GPIO.input(self.GPIO_ECHO_1) == True:
             time_end = time.time()
         # the measured distance is output in cm
@@ -152,8 +157,13 @@ class CarrierDetection(object):
         GPIO.output(self.GPIO_TRIGGER_2, True)
         time.sleep(0.00002)
         GPIO.output(self.GPIO_TRIGGER_2, False)
+        echo_status_counter = 1
         while GPIO.input(self.GPIO_ECHO_2) == False:
-            time_start = time.time()
+            if echo_status_counter < 1000:
+                    time_start = time.time()
+                    echo_status_counter += 1
+            else:
+                break   
         while GPIO.input(self.GPIO_ECHO_2) == True:
             time_end = time.time()
         # the measured distance is output in cm
