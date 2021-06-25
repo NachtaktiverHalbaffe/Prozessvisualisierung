@@ -38,6 +38,8 @@ class ProcessVisualisation(object):
         self.boundToResource = 0
         self.pvStopFlag = Event()
         self.pvStopFlag.clear()
+        # setup carrierdetection
+        self.carrierDetection = CarrierDetection()
 
         # setup logging
         self.logger = logging.getLogger("processvisualisation")
@@ -55,7 +57,7 @@ class ProcessVisualisation(object):
     # Handles the process of executing a visualisation task
 
     def executeOrder(self):
-        from api.settings import visualiser
+        from api.settings import visualiser, processVisualisation
 
         # get parameter for task and setup visualiser
         self.logger.info("[PROCESSVISUALISATION] Visualisation startet.")
@@ -79,9 +81,11 @@ class ProcessVisualisation(object):
             self.pvStopFlag.clear()
             return
         errorCounter = 0
+        Thread(target=self.carrierDetection.detectCarrier, args=[self.baseLevelHeight]).start()
+
         while True:
             if not self.pvStopFlag.is_set():
-                if CarrierDetection().detectCarrier('entrance', self.baseLevelHeight):
+                if self.carrierDetection.detectedOnEntrance:
                     # display incoming carrier
                     Thread(target=self._updateState, args=["playing"]).start()
                     # get final state of workingpiece from mes and
@@ -93,7 +97,7 @@ class ProcessVisualisation(object):
                         "[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
                     visualiser.displayIncomingCarrier()
                     break
-                else:
+                elif self.carrierDetection.detectedOnExit:
                     errorCounter += 1
                     if errorCounter <= 3:
                         # repeating carrierdetection
@@ -107,7 +111,6 @@ class ProcessVisualisation(object):
                             "[PROCESSVISUALISATION] Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         sendError(level="[ERROR]",
                                   msg="Detected carrier in exit multiple times, but expected it on entrance. Aborting processVisualisation on unit:" + str(self.boundToResource))
-                        visualiser.displayIdleStill()
                         Thread(target=self._idleAnimation).start()
                         self._cleanup()
                         return
@@ -141,24 +144,27 @@ class ProcessVisualisation(object):
                         sendError(level="[ERROR]",
                                   msg="Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         break
-                else:
+                elif self.carrierDetection.detectedOnExit:
                     if errorCounter <= 3:
                         errorCounter += 1
                         self.errorLogger.warning(
                             "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Retrying to poll state again in a second...")
                         sendError(
                             level="[WARNING]", msg="Bound resource under unit isnt executing a task. Retrying to poll state again in a second...")
-                        time.sleep(1)
                         break
 
                     else:
+                        # detects carrier leaving the unit => display outgoiing carrier and resetting processvisualisation
                         self.errorLogger.error(
                             "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
                         sendError(
                             level="[ERROR]", msg="Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
                         Thread(target=self._updateState,
                                args=["finished"]).start()
-                        break
+                        visualiser.displayOutgoingCarrier()
+                        self._cleanup()
+                        Thread(target= self.executeOrder).start()
+                        return 
         else:
             visualiser.displayIdleStill()
             Thread(target=self._idleAnimation).start()
@@ -172,10 +178,10 @@ class ProcessVisualisation(object):
         errorCounter = 0
         while True:
             if not self.pvStopFlag.is_set():
-                if CarrierDetection().detectCarrier('exit', self.baseLevelHeight):
+                if self.carrierDetection.detectedOnExit:
                     visualiser.displayOutgoingCarrier()
                     break
-                else:
+                elif self.carrierDetection.detectedOnEntrance:
                     errorCounter += 1
                     if errorCounter <= 3:
                         # repeating carrierdetection
@@ -275,7 +281,7 @@ class ProcessVisualisation(object):
 
     def _idleAnimation(self):
         from api.settings import visualiser
-
+        visualiser.displayIdleStill()
         visualiser.displayIdle()
 
     def _updatePar(self):
@@ -318,6 +324,8 @@ class ProcessVisualisation(object):
         workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
         self.db.session.delete(workingPiece)
         self.db.session.commit()
+        # kill ultrasonic sensors measurements threads
+        self.carrierDetection.kill()
 
     # validate if task is executable depending on state of workingpiece
     def _validateTask(self):

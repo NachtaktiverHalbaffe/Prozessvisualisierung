@@ -15,9 +15,12 @@ from threading import Thread, Event
 class CarrierDetection(object):
 
     def __init__(self):
+        self.DETECT_THRESHOLD = 2
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
         self.baseLevel = 0.0
+        self.detectedOnEntrance = False
+        self.detectedOnExit = False
         self.detectedIntrusion = False
         self.stopFlag = Event()
         self.stopFlag.clear()
@@ -53,81 +56,83 @@ class CarrierDetection(object):
         self.logger.addHandler(stream_handler)
         self.logger.addHandler(file_handler_pv)
 
+
+    # measure the baselevelheight
     def calibrate(self):
         time.sleep(0.5)
         self._measureExit()
         time.sleep(0.5)
         self._measureEntrance()
         if abs(self.distanceEntrance - self.distanceExit) < 6:
-            GPIO.cleanup()
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
             # format baselevel to 2 decimal places
             self.baseLevel = "{:.2f}".format(self.baseLevel)
+            self.kill()
             return
         else:
-            GPIO.cleanup()
             self.baseLevel = 0.0
+            self.kill()
             return
 
-    def detectCarrier(self, exspected, baseLevelHeight):
-        isExpected = False
+    # detect the carrier on either entrance or exit if the unit. 
+    # Runs in a thread in processvisualisation
+    def detectCarrier(self, baseLevelHeight):
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
 
-        while True:
-            time.sleep(0.1)
-            self._measureEntrance()
-            time.sleep(0.1)
-            self._measureExit()
+        while not self.stopFlag.isSet():
+            try:
+                time.sleep(0.1)
+                self._measureEntrance()
+                time.sleep(0.1)
+                self._measureExit()
 
-            if exspected == 'entrance':
-                if baseLevelHeight - self.distanceExit > 10:
+                #check for detection on exit
+                if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
                     self.logger.info(
                         "[CARRIERDETECTION] Detected carrier on exit")
-                    isExpected = False
-                    break
-                if baseLevelHeight - self.distanceEntrance > 10:
+                    self.detectedOnExit = True
+                    self.stopFlag.clear()
+                elif baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
+                    self.detectedOnExit = False
+                #check for detection on entrance
+                if baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
                     self.logger.info(
                         "[CARRIERDETECTION] Detected carrier on entrance")
-                    isExpected = True
-                    break
-            elif exspected == 'exit':
-                if baseLevelHeight - self.distanceEntrance > 10:
-                    self.logger.info(
-                        "[CARRIERDETECTION] Detected carrier on entrance")
-                    isExpected = False
-                    break
-                if baseLevelHeight - self.distanceExit > 10:
-                    isExpected = True
-                    self.logger.info(
-                        "[CARRIERDETECTION] Detected carrier on exit")
-                    break
-            elif exspected == 'both':
-                if baseLevelHeight - self.distanceEntrance > 10 or baseLevelHeight - self.distanceExit > 10:
-                    isExpected = True
-                    self.logger.info("[CARRIERDETECTION] Detected carrier")
-                    break
-        GPIO.cleanup()
-        return isExpected
+                    self.detectedOnEntrance = True
+                    self.stopFlag.clear()
+                elif baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
+                    self.detectedOnEntrance = False
+                    self.stopFlag.clear()
 
+            except Exception as e:
+                self.logger.error('[CARRIERDETECTION] Scan currently not possible. Exception: ', e)
+                self.kill()
+        
+    # measures if a intrusion is detected on either the entrance or exit. 
+    # Doesnt care where its detected, only checks for general intrusion
     def checkForIntrusion(self, baseLevelHeight):
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
         baseLevelHeight = float(baseLevelHeight)
+        "{:.2f}".format(baseLevelHeight)
         while not self.stopFlag.isSet():
             time.sleep(0.3)
             self._measureEntrance()
             time.sleep(0.3)
             self._measureExit()
-            if baseLevelHeight - self.distanceExit > 10 or baseLevelHeight - self.distanceEntrance > 10:
+            if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD or baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
                 self.detectedIntrusion = True
             else:
                 self.detectedIntrusion = False
         self.stopFlag.clear()
 
+    # stop the carrierdetection threads
     def kill(self):
+        GPIO.cleanup()
         self.stopFlag.set()
 
+    # sensor logic on the sensor on the entrance
     def _measureEntrance(self):
         GPIO.output(self.GPIO_TRIGGER_1, True)
         time.sleep(0.00002)
@@ -140,6 +145,7 @@ class CarrierDetection(object):
         # distance = (delta_time * schallgeschw.)/ 2
         self.distanceEntrance = ((time_end - time_start) * 34300) / 2
 
+    # sensor logic on the sensor on the exit
     def _measureExit(self):
         GPIO.output(self.GPIO_TRIGGER_2, True)
         time.sleep(0.00002)
