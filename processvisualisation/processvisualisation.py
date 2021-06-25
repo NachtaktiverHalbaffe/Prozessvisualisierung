@@ -153,6 +153,7 @@ class ProcessVisualisation(object):
                         Thread(target=self._updateState,
                                args=["finished"]).start()
                         visualiser.displayOutgoingCarrier()
+                        self.carrierDetection.kill()
                         return self.executeOrder()
         else:
             visualiser.displayIdleStill()
@@ -314,7 +315,7 @@ class ProcessVisualisation(object):
         self.db.session.delete(workingPiece)
         self.db.session.commit()
         # kill ultrasonic sensors measurements threads
-        # self.carrierDetection.kill()
+        self.carrierDetection.kill()
 
     # validate if task is executable depending on state of workingpiece
     def _validateTask(self):

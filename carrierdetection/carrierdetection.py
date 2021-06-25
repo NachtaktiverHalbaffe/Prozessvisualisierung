@@ -63,52 +63,55 @@ class CarrierDetection(object):
         self._measureExit()
         time.sleep(0.5)
         self._measureEntrance()
+        print(self.distanceExit)
+        print(self.distanceEntrance)
         if abs(self.distanceEntrance - self.distanceExit) < 6:
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
             # format baselevel to 2 decimal places
             self.baseLevel = "{:.2f}".format(self.baseLevel)
-            self.kill()
             return
         else:
             self.baseLevel = 0.0
-            self.kill()
             return
 
     # detect the carrier on either entrance or exit if the unit. 
     # Runs in a thread in processvisualisation
     def detectCarrier(self, baseLevelHeight):
+        print(baseLevelHeight)
         self.stopFlag.clear()
         self.detectedOnEntrance = False
         self.detectedOnExit = False
-        self.distanceEntrance = 0.0
-        self.distanceExit = 0.0
-        self.distanceEntrance = 0.0
-        self.distanceExit = 0.0
+        self.distanceEntrance = baseLevelHeight
+        self.distanceExit = baseLevelHeight
 
         while not self.stopFlag.isSet():
             try:
-                time.sleep(0.1)
+                time.sleep(0.3)
                 self._measureEntrance()
-                time.sleep(0.1)
+                time.sleep(0.3)
                 self._measureExit()
-
-                #check for detection on exit
-                if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
-                    self.detectedOnExit = True
-                    self.stopFlag.clear()
-                else:
-                    self.detectedOnExit = False
-                #check for detection on entrance
-                if baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
-                    self.detectedOnEntrance = True
-                    self.stopFlag.clear()
-                else:
-                    self.detectedOnEntrance = False
-                    self.stopFlag.clear()
-
             except Exception as e:
                 self.logger.error('[CARRIERDETECTION] Scan currently not possible. Exception: ', e)
-                self.kill()
+                self.distanceEntrance = baseLevelHeight
+                self.distanceExit = baseLevelHeight
+
+            #check for detection on exit
+            if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
+                self.detectedOnExit = True
+                self.stopFlag.clear()
+                self.logger.info("[CARRIERDETECTION] Detected Carrier on Entrance")
+            else:
+                self.detectedOnExit = False
+            #check for detection on entrance
+            if baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
+                self.detectedOnEntrance = True
+                self.stopFlag.clear()
+                self.logger.info("[CARRIERDETECTION] Detected Carrier on Exit")
+            else:
+                self.detectedOnEntrance = False
+                self.stopFlag.clear()
+
+            
         
     # measures if a intrusion is detected on either the entrance or exit. 
     # Doesnt care where its detected, only checks for general intrusion
@@ -119,10 +122,6 @@ class CarrierDetection(object):
         baseLevelHeight = float(baseLevelHeight)
         "{:.2f}".format(baseLevelHeight)
         while not self.stopFlag.isSet():
-            time.sleep(0.3)
-            self._measureEntrance()
-            time.sleep(0.3)
-            self._measureExit()
             if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD or baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
                 self.detectedIntrusion = True
             else:
@@ -146,6 +145,7 @@ class CarrierDetection(object):
         # the measured distance is output in cm
         # distance = (delta_time * schallgeschw.)/ 2
         self.distanceEntrance = ((time_end - time_start) * 34300) / 2
+        time.sleep(0.2)
 
     # sensor logic on the sensor on the exit
     def _measureExit(self):
@@ -159,3 +159,4 @@ class CarrierDetection(object):
         # the measured distance is output in cm
         # distance = (delta_time * schallgeschw.)/ 2
         self.distanceExit = ((time_end - time_start) * 34300) / 2
+        time.sleep(0.2)
