@@ -15,7 +15,7 @@ from threading import Thread, Event
 class CarrierDetection(object):
 
     def __init__(self):
-        self.DETECT_THRESHOLD = 100
+        self.DETECT_THRESHOLD = 40
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
         self.baseLevel = 0.0
@@ -63,9 +63,8 @@ class CarrierDetection(object):
         self._measureExit()
         time.sleep(0.5)
         self._measureEntrance()
-        print(self.distanceExit)
-        print(self.distanceEntrance)
-        if abs(self.distanceEntrance - self.distanceExit) < 6:
+
+        if abs(self.distanceEntrance - self.distanceExit) < 20:
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
             # format baselevel to 2 decimal places
             self.baseLevel = "{:.2f}".format(self.baseLevel)
@@ -77,7 +76,6 @@ class CarrierDetection(object):
     # detect the carrier on either entrance or exit if the unit. 
     # Runs in a thread in processvisualisation
     def detectCarrier(self, baseLevelHeight):
-        print(baseLevelHeight)
         self.stopFlag.clear()
         self.detectedOnEntrance = False
         self.detectedOnExit = False
@@ -86,27 +84,27 @@ class CarrierDetection(object):
 
         while not self.stopFlag.isSet():
             try:
-                time.sleep(0.3)
                 self._measureEntrance()
-                time.sleep(0.3)
                 self._measureExit()
             except Exception as e:
                 self.logger.error('[CARRIERDETECTION] Scan currently not possible. Exception: ', e)
                 self.distanceEntrance = baseLevelHeight
                 self.distanceExit = baseLevelHeight
-
+            
+            print(self.distanceEntrance)
+            print(self.distanceExit)
             #check for detection on exit
             if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
                 self.detectedOnExit = True
                 self.stopFlag.clear()
-                self.logger.info("[CARRIERDETECTION] Detected Carrier on Entrance")
+                self.logger.info("[CARRIERDETECTION] Detected Carrier on Exit")
             else:
                 self.detectedOnExit = False
             #check for detection on entrance
             if baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
                 self.detectedOnEntrance = True
                 self.stopFlag.clear()
-                self.logger.info("[CARRIERDETECTION] Detected Carrier on Exit")
+                self.logger.info("[CARRIERDETECTION] Detected Carrier on Entrance")
             else:
                 self.detectedOnEntrance = False
                 self.stopFlag.clear()
@@ -134,39 +132,60 @@ class CarrierDetection(object):
         self.stopFlag.set()
 
     # sensor logic on the sensor on the entrance
-    def _measureEntrance(self):
-        GPIO.output(self.GPIO_TRIGGER_1, True)
-        time.sleep(0.00002)
-        GPIO.output(self.GPIO_TRIGGER_1, False)
-        echo_status_counter = 1
-        while GPIO.input(self.GPIO_ECHO_1) == False:
-                if echo_status_counter < 1000:
-                    time_start = time.time()
-                    echo_status_counter += 1
-                else:
-                    break       
-        while GPIO.input(self.GPIO_ECHO_1) == True:
-            time_end = time.time()
-        # the measured distance is output in cm
-        # distance = (delta_time * schallgeschw.)/ 2
-        self.distanceEntrance = ((time_end - time_start) * 34300) / 2
-        time.sleep(0.2)
+    def _measureEntrance(self, sample_size = 7, sample_wait = 0.1):
+        samples = []
+        for sample in range(sample_size):
+            time_end= 0
+            time_start=0
+            GPIO.output(self.GPIO_TRIGGER_1, GPIO.LOW)
+            time.sleep(sample_wait)
+            GPIO.output(self.GPIO_TRIGGER_1, True)
+            time.sleep(0.00002)
+            GPIO.output(self.GPIO_TRIGGER_1, False)
+            echo_status_counter = 1
+            while GPIO.input(self.GPIO_ECHO_1) == False:
+                    if echo_status_counter < 10000:
+                        time_start = time.time()
+                        echo_status_counter += 1
+                    else:
+                        return       
+            while GPIO.input(self.GPIO_ECHO_1) == True:
+                time_end = time.time()
+            # the measured distance is output in cm
+            # distance = (delta_time * schallgeschw.)/ 2
+            if (time_start != 0 and time_end !=0):
+                samples.append(((time_end - time_start) * 34300) / 2)
+        # calculating with avergae value
+        #self.distanceEntrance = sum(samples)/len(samples)
+        # calculating with median
+        self.distanceEntrance = sorted(samples)[len(samples) //2]
+
 
     # sensor logic on the sensor on the exit
-    def _measureExit(self):
-        GPIO.output(self.GPIO_TRIGGER_2, True)
-        time.sleep(0.00002)
-        GPIO.output(self.GPIO_TRIGGER_2, False)
-        echo_status_counter = 1
-        while GPIO.input(self.GPIO_ECHO_2) == False:
-            if echo_status_counter < 1000:
-                    time_start = time.time()
-                    echo_status_counter += 1
-            else:
-                break   
-        while GPIO.input(self.GPIO_ECHO_2) == True:
-            time_end = time.time()
-        # the measured distance is output in cm
-        # distance = (delta_time * schallgeschw.)/ 2
-        self.distanceExit = ((time_end - time_start) * 34300) / 2
-        time.sleep(0.2)
+    def _measureExit(self,sample_size = 7, sample_wait = 0.1):
+        samples = []
+        for sample in range(sample_size):
+            time_end= 0
+            time_start=0
+            GPIO.output(self.GPIO_TRIGGER_2, GPIO.LOW)
+            time.sleep(sample_wait)
+            GPIO.output(self.GPIO_TRIGGER_2, True)
+            time.sleep(0.00002)
+            GPIO.output(self.GPIO_TRIGGER_2, False)
+            echo_status_counter = 1
+            while GPIO.input(self.GPIO_ECHO_2) == False:
+                if echo_status_counter < 10000:
+                        time_start = time.time()
+                        echo_status_counter += 1
+                else:
+                    return   
+            while GPIO.input(self.GPIO_ECHO_2) == True:
+                time_end = time.time()
+            # the measured distance is output in cm
+            # distance = (delta_time * schallgeschw.)/ 2
+            if (time_start != 0 and time_end !=0):
+                samples.append(((time_end - time_start) * 34300) / 2)
+        # calculating with avergae value
+        #self.distanceExit = sum(samples)/len(samples)
+        # calculating with median
+        self.distanceExit = sorted(samples)[len(samples) //2]

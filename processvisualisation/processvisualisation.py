@@ -154,24 +154,6 @@ class ProcessVisualisation(object):
                 if self.carrierDetection.detectedOnExit:
                     visualiser.displayOutgoingCarrier()
                     break
-                elif self.carrierDetection.detectedOnEntrance:
-                    errorCounter += 1
-                    if errorCounter <= 3:
-                        # repeating carrierdetection
-                        self.errorLogger.warning(
-                            "[PROCESSVISUALISATION] Detected Carrier in entrance, but expected it on exit")
-                        sendError(
-                            msg="Detected Carrier in entrance, but expected it on exit. Resetting carrierdetection")
-                    else:
-                        # aborting visualisation task cause it detected too often the carrier on the entrance
-                        self.errorLogger.error(
-                            "[PROCESSVISUALISATION] Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
-                        sendError(level="[ERROR]",
-                                  msg="Detected Carrier in entrance multiple times, but expected it on exit. Aborting processvisualisation on unit:" + str(self.boundToResource))
-                        self._cleanup()
-                        visualiser.displayIdleStill()
-                        Thread(target=self._idleAnimation).start()
-                        return
             else:
                 visualiser.displayIdleStill()
                 Thread(target=self._idleAnimation).start()
