@@ -15,7 +15,7 @@ from threading import Thread, Event
 class CarrierDetection(object):
 
     def __init__(self):
-        self.DETECT_THRESHOLD = 2
+        self.DETECT_THRESHOLD = 100
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
         self.baseLevel = 0.0
@@ -77,6 +77,11 @@ class CarrierDetection(object):
     # detect the carrier on either entrance or exit if the unit. 
     # Runs in a thread in processvisualisation
     def detectCarrier(self, baseLevelHeight):
+        self.stopFlag.clear()
+        self.detectedOnEntrance = False
+        self.detectedOnExit = False
+        self.distanceEntrance = 0.0
+        self.distanceExit = 0.0
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
 
@@ -89,19 +94,15 @@ class CarrierDetection(object):
 
                 #check for detection on exit
                 if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
-                    self.logger.info(
-                        "[CARRIERDETECTION] Detected carrier on exit")
                     self.detectedOnExit = True
                     self.stopFlag.clear()
-                elif baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
+                else:
                     self.detectedOnExit = False
                 #check for detection on entrance
                 if baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
-                    self.logger.info(
-                        "[CARRIERDETECTION] Detected carrier on entrance")
                     self.detectedOnEntrance = True
                     self.stopFlag.clear()
-                elif baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
+                else:
                     self.detectedOnEntrance = False
                     self.stopFlag.clear()
 
@@ -112,6 +113,7 @@ class CarrierDetection(object):
     # measures if a intrusion is detected on either the entrance or exit. 
     # Doesnt care where its detected, only checks for general intrusion
     def checkForIntrusion(self, baseLevelHeight):
+        self.stopFlag.clear()
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
         baseLevelHeight = float(baseLevelHeight)
@@ -129,7 +131,7 @@ class CarrierDetection(object):
 
     # stop the carrierdetection threads
     def kill(self):
-        GPIO.cleanup()
+        #GPIO.cleanup()
         self.stopFlag.set()
 
     # sensor logic on the sensor on the entrance

@@ -231,7 +231,6 @@ class Visualiser(object):
             pygame.display.flip()
             pygame.time.wait(30)
         # kill intrusion detection thread
-        carrierDetection.kill()
         time.sleep(0.3)
         return True
 

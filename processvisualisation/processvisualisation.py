@@ -60,10 +60,11 @@ class ProcessVisualisation(object):
         from api.settings import visualiser, processVisualisation
 
         # get parameter for task and setup visualiser
+        pygame.quit()
+        self.carrierDetection.kill()
         self.logger.info("[PROCESSVISUALISATION] Visualisation startet.")
         self.updateOrder()
         self.pvStopFlag.clear()
-        pygame.quit()
         if not pygame.get_init():
             visualiser.initPygame()
         visualiser.reviveVisualiser()
@@ -124,7 +125,6 @@ class ProcessVisualisation(object):
         process itself
         """
         if not self.pvStopFlag.is_set():
-            errorCounter = 0
             while True:
                 # check if workingstation is busy
                 data = getStatePLC(self.boundToResource)
@@ -145,26 +145,15 @@ class ProcessVisualisation(object):
                                   msg="Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         break
                 elif self.carrierDetection.detectedOnExit:
-                    if errorCounter <= 3:
-                        errorCounter += 1
-                        self.errorLogger.warning(
-                            "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Retrying to poll state again in a second...")
-                        sendError(
-                            level="[WARNING]", msg="Bound resource under unit isnt executing a task. Retrying to poll state again in a second...")
-                        break
-
-                    else:
                         # detects carrier leaving the unit => display outgoiing carrier and resetting processvisualisation
                         self.errorLogger.error(
-                            "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
+                            "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
                         sendError(
-                            level="[ERROR]", msg="Bound resource under unit isnt executing a task. Assuming detected carrier hasnt a assigned task")
+                            level="[ERROR]", msg="Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
                         Thread(target=self._updateState,
                                args=["finished"]).start()
                         visualiser.displayOutgoingCarrier()
-                        self._cleanup()
-                        Thread(target= self.executeOrder).start()
-                        return 
+                        return self.executeOrder()
         else:
             visualiser.displayIdleStill()
             Thread(target=self._idleAnimation).start()
@@ -325,7 +314,7 @@ class ProcessVisualisation(object):
         self.db.session.delete(workingPiece)
         self.db.session.commit()
         # kill ultrasonic sensors measurements threads
-        self.carrierDetection.kill()
+        # self.carrierDetection.kill()
 
     # validate if task is executable depending on state of workingpiece
     def _validateTask(self):
