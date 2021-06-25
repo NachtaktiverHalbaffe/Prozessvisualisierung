@@ -29,9 +29,6 @@ api.add_resource(StateWorkingPiece, '/api/StateWorkingPiece')
 if __name__ == "__main__":
     # update or create state at startup
     # db.create_all()
-    calibrater = CarrierDetection()
-    calibrater.calibrate()
-    BASE_LEVEL_HEIGHT = calibrater.baseLevel
 
     # update state
     state = StateModel.query.filter_by(id=1).first()
@@ -43,13 +40,13 @@ if __name__ == "__main__":
         state = StateModel(
             id=1,
             ipAdress=ipAdress,
-            baseLevelHeight=calibrater.baseLevel,
+            baseLevelHeight=BASE_LEVEL_HEIGHT,
             boundToResourceID=0,
             state="idle")
     else:
         state.id = 1
         state.ipAdress = ipAdress
-        state.baseLevelHeight = calibrater.baseLevel
+        state.baseLevelHeight = BASE_LEVEL_HEIGHT
     db.session.add(state)
     db.session.commit()
 
