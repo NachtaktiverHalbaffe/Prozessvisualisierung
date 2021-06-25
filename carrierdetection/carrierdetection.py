@@ -10,6 +10,7 @@ import RPi.GPIO as GPIO
 import time
 import logging
 from threading import Thread, Event
+from hcsr04sensor import sensor
 
 
 class CarrierDetection(object):
@@ -32,10 +33,8 @@ class CarrierDetection(object):
         self.GPIO_ECHO_2 = 18  # exit
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
-        GPIO.setup(self.GPIO_TRIGGER_1, GPIO.OUT)
-        GPIO.setup(self.GPIO_ECHO_1, GPIO.IN)
-        GPIO.setup(self.GPIO_TRIGGER_2, GPIO.OUT)
-        GPIO.setup(self.GPIO_ECHO_2, GPIO.IN)
+        self.sensorEntrance = sensor.Measurement(self.GPIO_TRIGGER_1, self.GPIO_ECHO_1)
+        self.sensorExit = sensor.Measurement(self.GPIO_TRIGGER_2,self.GPIO_ECHO_2)
 
         # setup logging
         self.logger = logging.getLogger("processvisualisation")
@@ -59,69 +58,66 @@ class CarrierDetection(object):
 
     # measure the baselevelheight
     def calibrate(self):
+        self.distanceEntrance = self.sensorEntrance.raw_distance()
         time.sleep(0.5)
-        self._measureExit()
-        time.sleep(0.5)
-        self._measureEntrance()
-        print(self.distanceExit)
-        print(self.distanceEntrance)
+        self.distanceExit = self.sensorExit.raw_distance()
         if abs(self.distanceEntrance - self.distanceExit) < 6:
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
             # format baselevel to 2 decimal places
             self.baseLevel = "{:.2f}".format(self.baseLevel)
+            self.kill()
             return
         else:
             self.baseLevel = 0.0
+            self.kill()
             return
 
     # detect the carrier on either entrance or exit if the unit. 
     # Runs in a thread in processvisualisation
     def detectCarrier(self, baseLevelHeight):
-        print(baseLevelHeight)
         self.stopFlag.clear()
         self.detectedOnEntrance = False
         self.detectedOnExit = False
-        self.distanceEntrance = baseLevelHeight
-        self.distanceExit = baseLevelHeight
+        self.distanceEntrance = 0.0
+        self.distanceExit = 0.0
+        self.distanceEntrance = 0.0
+        self.distanceExit = 0.0
 
         while not self.stopFlag.isSet():
             try:
-                time.sleep(0.3)
-                self._measureEntrance()
-                time.sleep(0.3)
-                self._measureExit()
+                self.distanceEntrance = self.sensorEntrance.raw_distance()
+                time.sleep(0.5)
+                self.distanceExit = self.sensorExit.raw_distance()
+
+                #check for detection on exit
+                if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
+                    self.detectedOnExit = True
+                    self.stopFlag.clear()
+                else:
+                    self.detectedOnExit = False
+                #check for detection on entrance
+                if baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
+                    self.detectedOnEntrance = True
+                    self.stopFlag.clear()
+                else:
+                    self.detectedOnEntrance = False
+                    self.stopFlag.clear()
+
             except Exception as e:
                 self.logger.error('[CARRIERDETECTION] Scan currently not possible. Exception: ', e)
-                self.distanceEntrance = baseLevelHeight
-                self.distanceExit = baseLevelHeight
-
-            #check for detection on exit
-            if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
-                self.detectedOnExit = True
-                self.stopFlag.clear()
-                self.logger.info("[CARRIERDETECTION] Detected Carrier on Entrance")
-            else:
-                self.detectedOnExit = False
-            #check for detection on entrance
-            if baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
-                self.detectedOnEntrance = True
-                self.stopFlag.clear()
-                self.logger.info("[CARRIERDETECTION] Detected Carrier on Exit")
-            else:
-                self.detectedOnEntrance = False
-                self.stopFlag.clear()
-
-            
+                self.kill()
         
     # measures if a intrusion is detected on either the entrance or exit. 
     # Doesnt care where its detected, only checks for general intrusion
-    def checkForIntrusion(self, baseLevelHeight):
+    def checkForIntrusion(self,baseLevelHeight):
         self.stopFlag.clear()
-        self.distanceEntrance = 0.0
-        self.distanceExit = 0.0
         baseLevelHeight = float(baseLevelHeight)
         "{:.2f}".format(baseLevelHeight)
         while not self.stopFlag.isSet():
+            time.sleep(0.3)
+            self._measureEntrance()
+            time.sleep(0.3)
+            self._measureExit()
             if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD or baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
                 self.detectedIntrusion = True
             else:
@@ -145,7 +141,8 @@ class CarrierDetection(object):
         # the measured distance is output in cm
         # distance = (delta_time * schallgeschw.)/ 2
         self.distanceEntrance = ((time_end - time_start) * 34300) / 2
-        time.sleep(0.2)
+
+        time.sleep(0.5)
 
     # sensor logic on the sensor on the exit
     def _measureExit(self):
@@ -159,4 +156,5 @@ class CarrierDetection(object):
         # the measured distance is output in cm
         # distance = (delta_time * schallgeschw.)/ 2
         self.distanceExit = ((time_end - time_start) * 34300) / 2
-        time.sleep(0.2)
+
+        time.sleep(0.5)
