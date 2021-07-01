@@ -11,6 +11,7 @@ from threading import Thread, Event
 import logging
 import pygame
 import sys
+import time
 sys.path.append('.')
 sys.path.append('..')
 
@@ -139,6 +140,8 @@ class ProcessVisualisation(object):
                         visualiser.displayOutgoingCarrier()
                         self.carrierDetection.killCarrierDetection()
                         return self.executeOrder()
+                else:
+                    time.sleep(0.5)
         else:
             Thread(target=self._idleAnimation).start()
             self.pvStopFlag.clear()

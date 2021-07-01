@@ -7,7 +7,7 @@ Short description: resources for flask api
 
 """
 from api.models import StateWorkingPieceModel
-from mesrequests import getStateWorkingPiece, updateStateVisualisationUnit
+from mesrequests import getStateWorkingPiece, updateStateVisualisationUnit, updateStateVisualisationUnit
 from models import *
 from settings import visualiser, db, processVisualisation 
 from flask_restful import Resource, reqparse, fields, marshal_with, abort
@@ -316,7 +316,14 @@ class BindToResource(Resource):
         state.boundToResourceID = bindToResource
         db.session.add(state)
         db.session.commit()
-        return state, 201
+        payload={
+            "boundToRessource":state.boundToResourceID,
+            "state": state.state,
+            "ipAdress": state.ipAdress,
+            "baseLevelHeight": state.baseLevelHeight,
+        }
+        Thread(target= updateStateVisualisationUnit, args=[state.boundToResourceID, payload]).start()
+        return "", 201
 
     @ marshal_with(resourceFields)
     def put(self, bindToResource):
@@ -326,6 +333,13 @@ class BindToResource(Resource):
         state.boundToResourceID = bindToResource
         db.session.add(state)
         db.session.commit()
+        payload={
+            "boundToRessource":state.boundToResourceID,
+            "state": state.state,
+            "ipAdress": state.ipAdress,
+            "baseLevelHeight": state.baseLevelHeight,
+        }
+        Thread(target= updateStateVisualisationUnit, args=[state.boundToResourceID, payload]).start()
         return "", 201
 
     @ marshal_with(resourceFields)
@@ -336,5 +350,13 @@ class BindToResource(Resource):
         state.boundToResourceID = bindToResource
         db.session.add(state)
         db.session.commit()
+        payload={
+            "boundToRessource":state.boundToResourceID,
+            "state": state.state,
+            "ipAdress": state.ipAdress,
+            "baseLevelHeight": state.baseLevelHeight,
+        }
+        
+        Thread(target= updateStateVisualisationUnit, args=[state.boundToResourceID, payload]).start()
         return "", 201
 

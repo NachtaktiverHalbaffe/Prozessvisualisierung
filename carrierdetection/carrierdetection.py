@@ -75,16 +75,17 @@ class CarrierDetection(object):
         self._measureExit(sample_size=11)
         time.sleep(0.5)
         self._measureEntrance(sample_size=11)
-        self.logger("[CALIBRATE BASELEVEL] Distance on entrance: " + str(self.distanceEntrance))
-        self.logger("[CALIBRATE BASELEVEL] Distance on exit: " + str(self.distanceExit))
+        self.logger.info("[CALIBRATE BASELEVEL] Distance on entrance: " + str(self.distanceEntrance))
+        self.logger.info("[CALIBRATE BASELEVEL] Distance on exit: " + str(self.distanceExit))
 
         if abs(self.distanceEntrance - self.distanceExit) < 5:
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
             # format baselevel to 2 decimal places
             self.baseLevel = "{:.2f}".format(self.baseLevel)
+            self.logger.info("[CALIBRATE BASELEVEL] Calibration successful. Baselevel height: " + str(self.baseLevel))
             return
         else:
-            self.logger("[WARNING] Measured distance in entrance and exit differs too much. Calibrating again...")
+            self.logger.warning("[WARNING] Measured distance in entrance and exit differs too much. Calibrating again...")
             self.baseLevel = 0.0
             return self.calibrate()
 
