@@ -61,7 +61,7 @@ class ProcessVisualisation(object):
 
         # get parameter for task and setup visualiser
         pygame.quit()
-        self.carrierDetection.kill()
+        self.carrierDetection.killCarrierDetection()
         self.logger.info("[PROCESSVISUALISATION] Visualisation startet.")
         self.updateOrder()
         self.pvStopFlag.clear()
@@ -132,11 +132,11 @@ class ProcessVisualisation(object):
                         self.errorLogger.error(
                             "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
                         sendError(
-                            level="[ERROR]", msg="Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
+                            level="[WARNING]", msg="Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
                         Thread(target=self._updateState,
                                args=["finished"]).start()
                         visualiser.displayOutgoingCarrier()
-                        self.carrierDetection.kill()
+                        self.carrierDetection.killCarrierDetection()
                         return self.executeOrder()
         else:
             visualiser.displayIdleStill()
@@ -148,7 +148,6 @@ class ProcessVisualisation(object):
         outgoing carrier
         """
         Thread(target=self._updateState, args=["finished"]).start()
-        errorCounter = 0
         while True:
             if not self.pvStopFlag.is_set():
                 if self.carrierDetection.detectedOnExit:
@@ -280,7 +279,7 @@ class ProcessVisualisation(object):
         self.db.session.delete(workingPiece)
         self.db.session.commit()
         # kill ultrasonic sensors measurements threads
-        self.carrierDetection.kill()
+        self.carrierDetection.killCarrierDetection()
 
     # validate if task is executable depending on state of workingpiece
     def _validateTask(self):

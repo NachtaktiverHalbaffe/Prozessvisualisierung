@@ -29,7 +29,7 @@ class Visualiser(object):
 
     def __init__(self):
         self.isKilled = False
-        self.movSpeed = 0.2
+        self.movSpeed = 0.3
         # 3d model params
         self.modelName = 'IAS-Logo'
         self.model = None
@@ -228,9 +228,9 @@ class Visualiser(object):
             skybox.ground()
             self._enableGLFeatures(False)
             pygame.display.flip()
-            pygame.time.wait(30)
-        # kill intrusion detection thread
-        time.sleep(0.3)
+            pygame.time.wait(40)
+        
+        carrierDetection.killIntrusionDetection()
         return True
 
     # animation of the task "color". It gets applied on a

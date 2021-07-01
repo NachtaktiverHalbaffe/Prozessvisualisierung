@@ -25,6 +25,8 @@ class CarrierDetection(object):
         self.detectedIntrusion = False
         self.stopFlag = Event()
         self.stopFlag.clear()
+        self.stopFlagIntr = Event()
+        self.stopFlagIntr.clear()
 
         # setup sensors
         self.GPIO_TRIGGER_1 = 23  # entrance
@@ -56,6 +58,12 @@ class CarrierDetection(object):
         self.logger.handlers = []
         self.logger.addHandler(stream_handler)
         self.logger.addHandler(file_handler_pv)
+    
+    def __del__(self):
+        self.stopFlag.set()
+        self.stopFlagIntr.set()
+        GPIO.cleanup()
+
 
 
     # measure the baselevelheight
@@ -64,7 +72,7 @@ class CarrierDetection(object):
         self._measureExit(sample_size=11)
         time.sleep(0.5)
         self._measureEntrance(sample_size=11)
-        print("[CALIBRATE] Distance on enrtance: " + str(self.distanceEntrance))
+        print("[CALIBRATE] Distance on entrance: " + str(self.distanceEntrance))
         print("[CALIBRATE] Distance on exit: " + str(self.distanceExit))
 
         if abs(self.distanceEntrance - self.distanceExit) < 20:
@@ -116,20 +124,26 @@ class CarrierDetection(object):
     # measures if a intrusion is detected on either the entrance or exit. 
     # Doesnt care where its detected, only checks for general intrusion
     def checkForIntrusion(self, baseLevelHeight):
-        self.stopFlag.clear()
+        self.stopFlagIntr.clear()
+        self.detectedIntrusion = False
         baseLevelHeight = float(baseLevelHeight)
         "{:.2f}".format(baseLevelHeight)
-        while not self.stopFlag.isSet():
+        while not self.stopFlagIntr.isSet():
             if baseLevelHeight - self.distanceExit > self.INTRUSION_THRESHOLD or baseLevelHeight - self.distanceEntrance > self.INTRUSION_THRESHOLD:
                 self.detectedIntrusion = True
             else:
                 self.detectedIntrusion = False
-        self.stopFlag.clear()
+            time.sleep(0.3)
+        self.stopFlagIntr.clear()
 
     # stop the carrierdetection threads
-    def kill(self):
-        #GPIO.cleanup()
+    def killCarrierDetection(self):
         self.stopFlag.set()
+    
+    # stop the carrierdetection threads
+    def killIntrusionDetection(self):
+        self.stopFlagIntr.set()
+
 
     # sensor logic on the sensor on the entrance
     def _measureEntrance(self, sample_size = 7, sample_wait = 0.1):
