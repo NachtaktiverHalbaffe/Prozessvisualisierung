@@ -9,25 +9,30 @@ Short description: Module for detecting the carrier with ultrasonic sensor
 import RPi.GPIO as GPIO
 import time
 import logging
-from threading import Thread, Event
+from threading import Event
 
 
 class CarrierDetection(object):
 
     def __init__(self):
+        # Threshold for detecting a carrier. 
+        # If baselevel-measureddistance < threshold, it gets detected
         self.DETECT_THRESHOLD = 3
+        # Threshold for detecting a carrier. 
+        # If baselevel-measureddistance < threshold, it gets detected
         self.INTRUSION_THRESHOLD = 5
+        # intern params
         self.distanceEntrance = 0.0
         self.distanceExit = 0.0
         self.baseLevel = 0.0
         self.detectedOnEntrance = False
         self.detectedOnExit = False
         self.detectedIntrusion = False
-        self.stopFlag = Event()
+        # Flags for stopping the threads
+        self.stopFlag = Event() # for detectCarrier
         self.stopFlag.clear()
-        self.stopFlagIntr = Event()
+        self.stopFlagIntr = Event() # for checkforintrusion
         self.stopFlagIntr.clear()
-
         # setup sensors
         self.GPIO_TRIGGER_1 = 23  # entrance
         self.GPIO_TRIGGER_2 = 16  # exit
@@ -64,25 +69,24 @@ class CarrierDetection(object):
         self.stopFlagIntr.set()
         GPIO.cleanup()
 
-
-
     # measure the baselevelheight
     def calibrate(self):
         self.stopFlag.clear()
         self._measureExit(sample_size=11)
         time.sleep(0.5)
         self._measureEntrance(sample_size=11)
-        print("[CALIBRATE] Distance on entrance: " + str(self.distanceEntrance))
-        print("[CALIBRATE] Distance on exit: " + str(self.distanceExit))
+        self.logger("[CALIBRATE BASELEVEL] Distance on entrance: " + str(self.distanceEntrance))
+        self.logger("[CALIBRATE BASELEVEL] Distance on exit: " + str(self.distanceExit))
 
-        if abs(self.distanceEntrance - self.distanceExit) < 20:
+        if abs(self.distanceEntrance - self.distanceExit) < 5:
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
             # format baselevel to 2 decimal places
             self.baseLevel = "{:.2f}".format(self.baseLevel)
             return
         else:
+            self.logger("[WARNING] Measured distance in entrance and exit differs too much. Calibrating again...")
             self.baseLevel = 0.0
-            return
+            return self.calibrate()
 
     # detect the carrier on either entrance or exit if the unit. 
     # Runs in a thread in processvisualisation
@@ -140,13 +144,14 @@ class CarrierDetection(object):
     def killCarrierDetection(self):
         self.stopFlag.set()
     
-    # stop the carrierdetection threads
+    # stop the checkForIntrusion threads
     def killIntrusionDetection(self):
         self.stopFlagIntr.set()
 
 
-    # sensor logic on the sensor on the entrance
-    def _measureEntrance(self, sample_size = 7, sample_wait = 0.1):
+    # sensor logic on the sensor on the entrance. 
+    # Values gets sampled, if no samples are wanted, then set sample_size=1
+    def _measureEntrance(self, sample_size = 5, sample_wait = 0.1):
         samples = []
         for sample in range(sample_size):
             time_end= 0
@@ -176,7 +181,8 @@ class CarrierDetection(object):
 
 
     # sensor logic on the sensor on the exit
-    def _measureExit(self,sample_size = 7, sample_wait = 0.1):
+    # Values gets sampled, if no samples are wanted, then set sample_size=1
+    def _measureExit(self,sample_size = 5, sample_wait = 0.1):
         samples = []
         for sample in range(sample_size):
             time_end= 0

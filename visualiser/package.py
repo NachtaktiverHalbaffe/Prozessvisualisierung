@@ -1,5 +1,5 @@
 """
-Filename: ipackage.py
+Filename: package.py
 Version name: 0.1, 2021-05-25
 Short description: model object of package
 

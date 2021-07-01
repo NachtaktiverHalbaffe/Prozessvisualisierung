@@ -198,6 +198,7 @@ class Visualiser(object):
                 if currentTime < 5:
                     self.paint(currentTime)
                 elif currentTime < 5 + DRY_TIME:
+                    # wait for the defined DRY_TIME
                     self.paint(5)
                 else:
                     finished = True
@@ -230,6 +231,7 @@ class Visualiser(object):
             pygame.display.flip()
             pygame.time.wait(40)
         
+        # kill the Checkforintrusion thread
         carrierDetection.killIntrusionDetection()
         return True
 
@@ -256,6 +258,7 @@ class Visualiser(object):
     utils
     """
 
+    # loads 3d-model into the visuliser
     def loadModel(self):
         if self.modelName == 'IAS-Logo':
             self.model = IASModel()
@@ -269,6 +272,7 @@ class Visualiser(object):
             self.model.setPackaged(self.isPackaged)
             self.model.setColor(self.color)
 
+    # draws all the needed models
     def drawModel(self):
         if self.modelName == 'IAS-Logo':
             self.model.drawModel()
@@ -277,6 +281,7 @@ class Visualiser(object):
             self.model.drawModel()
         return
 
+    # initialise pygame and pyopengl
     def initPygame(self):
         pygame.init()
         pygame.display.set_mode(self.display, FULLSCREEN | DOUBLEBUF | OPENGL)
@@ -286,30 +291,19 @@ class Visualiser(object):
         glRotatef(60, 1, 0, 0)
         # enable gl features
         glEnable(GL_DEPTH_TEST)
-        # glClearColor(1.0, 1.0, 1.0, 0.0)
         glShadeModel(GL_FLAT)
-
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glBlendEquation(GL_FUNC_ADD)
 
-        # glEnable(GL_LIGHTING)
-        #glLight(GL_LIGHT0, GL_POSITION,  (0, 1, -7, 0))
-        #glLightfv(GL_LIGHT0, GL_AMBIENT, (1, 1, 1, 1))
-        #glLightfv(GL_LIGHT0, GL_DIFFUSE, (2, 2, 2, 1))
-        #glLight(GL_LIGHT0, GL_POSITION, (0, .5, 1))
         glEnable(GL_COLOR_MATERIAL)
 
     def _enableGLFeatures(self, isEnabled):
         if isEnabled:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            # glEnable(GL_LIGHTING)
-            # glEnable(GL_LIGHT0)
             glEnable(GL_COLOR_MATERIAL)
             glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
         elif not isEnabled:
-            # glDisable(GL_LIGHT0)
-            # glDisable(GL_LIGHTING)
             glDisable(GL_COLOR_MATERIAL)
 
     def _eventLoop(self, texture_id):

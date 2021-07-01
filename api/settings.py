@@ -11,6 +11,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# setup systemwide objects of processvisualisation and visualiser 
+# with which each visualisation task gets executed
 from processvisualisation.processvisualisation import ProcessVisualisation # nopep8
 from visualiser.visualiser import Visualiser # nopep8
 visualiser = Visualiser()

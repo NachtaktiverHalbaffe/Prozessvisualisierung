@@ -10,10 +10,7 @@ from api.models import StateWorkingPieceModel
 from mesrequests import getStateWorkingPiece, updateStateVisualisationUnit
 from models import *
 from settings import visualiser, db, processVisualisation 
-from processvisualisation.processvisualisation import ProcessVisualisation
-from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
-from multiprocessing import Process
-import requests
+from flask_restful import Resource, reqparse, fields, marshal_with, abort
 from threading import Thread
 
 
@@ -44,6 +41,10 @@ class APIOverview(Resource):
             "/api/StateUnit": {
                 "description": "Current state of the visualisationunit",
                 "options": "GET"
+            },
+            "/api/StateUnit/bind/<int:bindToResource>": {
+                "description": "Set the id of the visualisation unit to the bindToResource which must be the resourceId of the resource where the unit is mounted",
+                "options": "GET, PUT, PATCH"
             },
             "/api/VisualisationTask": {
                 "description": "Current visualisationtask of the unit",
@@ -105,7 +106,7 @@ class VisualisationTask(Resource):
         db.session.commit()
 
         # get StateWorkingPiece
-        getStateWorkingPiece(task.assignedWorkingPiece)
+        Thread(target=getStateWorkingPiece, args=[task.assignedWorkingPiece]).start()
         # start visualisation task
         try:
             visualiser.killVisualiser()
@@ -128,13 +129,13 @@ class VisualisationTask(Resource):
         db.session.add(state)
         db.session.commit()
         processVisualisation.kill() 
+        visualiser.killVisualiser()
+        # inform mes and quit processvisualisation
         data = {
             "state": state.state,
             "assignedTask": "None",
         }
-        # inform mes and quit processvisualisation
-        visualiser.killVisualiser()
-        updateStateVisualisationUnit(state.boundToResourceID, data)
+        Thread(target=updateStateVisualisationUnit, args=[state.boundToResourceID, data]).start()
         return "", 204
 
     @marshal_with(resourceFields)
@@ -166,7 +167,7 @@ class VisualisationTask(Resource):
         db.session.commit()
 
         # update processvisualisation
-        processVisualisation.updateOrder()
+        Thread(target=processVisualisation.updateOrder).start()
         return task, 202
 
 
@@ -325,7 +326,7 @@ class BindToResource(Resource):
         state.boundToResourceID = bindToResource
         db.session.add(state)
         db.session.commit()
-        return state, 201
+        return "", 201
 
     @ marshal_with(resourceFields)
     def get(self, bindToResource):
@@ -335,14 +336,5 @@ class BindToResource(Resource):
         state.boundToResourceID = bindToResource
         db.session.add(state)
         db.session.commit()
-        return state, 201
+        return "", 201
 
-
-class AbortTask(Resource):
-    resourceFields = {
-        'id': fields.Integer,
-        'state': fields.String,
-        'boundToResourceID': fields.Integer,
-        'ipAdress': fields.String,
-        'baseLevelHeight': fields.Float
-    }

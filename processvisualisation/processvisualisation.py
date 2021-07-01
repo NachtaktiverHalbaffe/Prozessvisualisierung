@@ -10,9 +10,7 @@ Short description: Module for handling processvisualisation
 from threading import Thread, Event
 import logging
 import pygame
-import time
 import sys
-import requests
 sys.path.append('.')
 sys.path.append('..')
 
@@ -54,10 +52,10 @@ class ProcessVisualisation(object):
         self.errorLogger.addHandler(STREAM_HANDLER)
         self.errorLogger.addHandler(FILE_HANDLER_ERROR)
 
-    # Handles the process of executing a visualisation task
 
+    # Handles the process of executing a visualisation task
     def executeOrder(self):
-        from api.settings import visualiser, processVisualisation
+        from api.settings import visualiser
 
         # get parameter for task and setup visualiser
         pygame.quit()
@@ -68,10 +66,13 @@ class ProcessVisualisation(object):
         if not pygame.get_init():
             visualiser.initPygame()
         visualiser.reviveVisualiser()
+        # start carrierdetection
+        Thread(target=self.carrierDetection.detectCarrier, args=[self.baseLevelHeight]).start()
 
         """
         Incoming carrier
         """
+        # check if processvisualisation got aborted
         if not self.pvStopFlag.is_set():
             self._updateVisualiser()
             Thread(target=self._updateState, args=["waiting"]).start()
@@ -81,10 +82,9 @@ class ProcessVisualisation(object):
             Thread(target=self._idleAnimation).start()
             self.pvStopFlag.clear()
             return
-        errorCounter = 0
-        Thread(target=self.carrierDetection.detectCarrier, args=[self.baseLevelHeight]).start()
-
+        
         while True:
+            # check if processvisualisation got aborted
             if not self.pvStopFlag.is_set():
                 if self.carrierDetection.detectedOnEntrance:
                     # display incoming carrier
@@ -99,7 +99,6 @@ class ProcessVisualisation(object):
                     visualiser.displayIncomingCarrier()
                     break
             else:
-                visualiser.displayIdleStill()
                 Thread(target=self._idleAnimation).start()
                 self.pvStopFlag.clear()
                 return
@@ -107,6 +106,7 @@ class ProcessVisualisation(object):
         """
         process itself
         """
+        # check if processvisualisation got aborted
         if not self.pvStopFlag.is_set():
             while True:
                 # check if workingstation is busy
@@ -122,13 +122,14 @@ class ProcessVisualisation(object):
                             Thread(target=self._updatePar).start()
                             break
                     else:
+                        # workingpiece is in wrong state => dont execute task
                         self.errorLogger.error(
                             "[PROCESSVISUALISATION] Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         sendError(level="[ERROR]",
                                   msg="Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         break
                 elif self.carrierDetection.detectedOnExit:
-                        # detects carrier leaving the unit => display outgoiing carrier and resetting processvisualisation
+                        # detects carrier leaving the unit => carrier was only driving through unit
                         self.errorLogger.error(
                             "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
                         sendError(
@@ -139,7 +140,6 @@ class ProcessVisualisation(object):
                         self.carrierDetection.killCarrierDetection()
                         return self.executeOrder()
         else:
-            visualiser.displayIdleStill()
             Thread(target=self._idleAnimation).start()
             self.pvStopFlag.clear()
             return
@@ -154,7 +154,6 @@ class ProcessVisualisation(object):
                     visualiser.displayOutgoingCarrier()
                     break
             else:
-                visualiser.displayIdleStill()
                 Thread(target=self._idleAnimation).start()
                 self.pvStopFlag.clear()
                 return
@@ -197,13 +196,16 @@ class ProcessVisualisation(object):
             self.isPackaged = False
             self.color = "#000000"
 
+        # update intern params of processvisualisation
         state = StateModel.query.filter_by(id=1).first()
         self.baseLevelHeight = state.baseLevelHeight
         self.boundToResource = state.boundToResourceID
 
+    # stop executing processvisualisation
     def kill(self):
         self.pvStopFlag.set()
 
+    # update params of visualiser
     def _updateVisualiser(self):
         from api.settings import visualiser
 
@@ -214,6 +216,7 @@ class ProcessVisualisation(object):
         visualiser.setModelName(self.model)
         visualiser.setTask(self.task)
 
+    # update state of unit internally and also on mes
     def _updateState(self, newState):
         from api.models import StateModel  # nopep8
         # update stateworkingpiece
@@ -231,13 +234,15 @@ class ProcessVisualisation(object):
             "state": newState,
             "assignedTask": task
         }
-        updateStateVisualisationUnit(state.boundToResourceID, data)
+        Thread(target=updateStateVisualisationUnit, args=[state.boundToResourceID, data]).start()
 
+    # display idle animation
     def _idleAnimation(self):
         from api.settings import visualiser
         visualiser.displayIdleStill()
         visualiser.displayIdle()
 
+    # update parameter after finishing the task
     def _updatePar(self):
         from api.models import StateWorkingPieceModel  # nopep8
         workingPiece = StateWorkingPieceModel.query.filter_by(id=1).first()
@@ -265,7 +270,7 @@ class ProcessVisualisation(object):
             "color": workingPiece.color,
             "storageLocation": 0,
         }
-        updateStateWorkingPiece(workingPiece.pieceID, data)
+        Thread(target=updateStateWorkingPiece,args=[workingPiece.pieceID, data]).start()
 
     # cleanup local database
     def _cleanup(self):

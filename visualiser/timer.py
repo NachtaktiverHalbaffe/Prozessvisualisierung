@@ -1,8 +1,11 @@
-import threading
-import time
+"""
+Filename: timer.py
+Version name: 0.1, 2021-05-21
+Short description: Simple timer which can be paused
 
+(C) 2003-2021 IAS, Universitaet Stuttgart
 
-from threading import Timer
+"""
 import time
 
 

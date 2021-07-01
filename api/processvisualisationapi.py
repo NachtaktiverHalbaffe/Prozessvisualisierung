@@ -17,7 +17,7 @@ from resources import *  # nopep8
 from carrierdetection.carrierdetection import CarrierDetection  # nopep8 # nopep8
 from settings import db, app, api  # nopep8
 from mesrequests import updateStateVisualisationUnit  # nopep8
-from constants import IP_MES, BASE_LEVEL_HEIGHT  # nopep8
+from constants import BASE_LEVEL_HEIGHT  # nopep8
 
 api.add_resource(APIOverview, '/api')
 api.add_resource(StateUnit, '/api/StateUnit')
@@ -47,6 +47,7 @@ if __name__ == "__main__":
         state.id = 1
         state.ipAdress = ipAdress
         state.baseLevelHeight = BASE_LEVEL_HEIGHT
+        state.state= "idle"
     db.session.add(state)
     db.session.commit()
 
@@ -75,7 +76,7 @@ if __name__ == "__main__":
         "assignedTask": assignedTask,
     }
     # send request to mes
-    updateStateVisualisationUnit(state.boundToResourceID, data)
+    Thread(target=updateStateVisualisationUnit,args=[state.boundToResourceID, data]).start()
 
     # ! In production change debug to false
     app.run(debug=True, host="0.0.0.0")
