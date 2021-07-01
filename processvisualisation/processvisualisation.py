@@ -115,7 +115,7 @@ class ProcessVisualisation(object):
                 if data["state"] == "busy":
                     if self._validateTask():
                         Thread(target=self._updateVisualiser).start()
-                        if visualiser.displayProcessVisualisation():
+                        if visualiser.displayProcessVisualisation(self.carrierDetection):
                             Thread(target=self._updateState,
                                    args=["finished"]).start()
                             # update parameter if task is finished

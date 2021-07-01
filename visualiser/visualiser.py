@@ -153,7 +153,7 @@ class Visualiser(object):
         glDeleteTextures(texture_id)
         return True
 
-    def displayProcessVisualisation(self):
+    def displayProcessVisualisation(self, carrierDetection):
         self.logger.info("[VISUALISER] Display processvisualisation")
         DRY_TIME = 3
         # load skybox
@@ -162,7 +162,6 @@ class Visualiser(object):
         finished = False
         # setup timer and intrusiondetection
         timer = Timer()
-        carrierDetection = CarrierDetection()
         Thread(target=carrierDetection.checkForIntrusion,
                args=[BASE_LEVEL_HEIGHT]).start()
         timer.start()
