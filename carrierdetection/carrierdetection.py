@@ -64,6 +64,8 @@ class CarrierDetection(object):
         self._measureExit(sample_size=11)
         time.sleep(0.5)
         self._measureEntrance(sample_size=11)
+        print("[CALIBRATE] Distance on enrtance: " + str(self.distanceEntrance))
+        print("[CALIBRATE] Distance on exit: " + str(self.distanceExit))
 
         if abs(self.distanceEntrance - self.distanceExit) < 20:
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
@@ -92,8 +94,7 @@ class CarrierDetection(object):
                 self.distanceEntrance = baseLevelHeight
                 self.distanceExit = baseLevelHeight
             
-            print(self.distanceEntrance)
-            print(self.distanceExit)
+    
             #check for detection on exit
             if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
                 self.detectedOnExit = True
@@ -127,7 +128,7 @@ class CarrierDetection(object):
 
     # stop the carrierdetection threads
     def kill(self):
-        GPIO.cleanup()
+        #GPIO.cleanup()
         self.stopFlag.set()
 
     # sensor logic on the sensor on the entrance
