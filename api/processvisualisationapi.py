@@ -79,4 +79,4 @@ if __name__ == "__main__":
     Thread(target=updateStateVisualisationUnit,args=[state.boundToResourceID, data]).start()
 
     # ! In production change debug to false
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=False, host="0.0.0.0")
