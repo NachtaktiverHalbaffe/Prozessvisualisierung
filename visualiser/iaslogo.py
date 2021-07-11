@@ -1,19 +1,15 @@
 """
 Filename: iaslogo.py
-Version name: 0.1, 2021-05-21
+Version name: 1.0, 2021-07-10
 Short description: model object of ias logo
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
-import pygame
 import pywavefront
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from .skyboy import Skybox
-import time
-import os
 
 from .model import Model
 from .package import PackageModel
@@ -123,6 +119,8 @@ class IASModel(Model):
             PackageModel().drawModel()
 
     # animate the assemble task
+    # @params:
+    #   time: time which already elapsed during the animation
     def assemble(self, time):
         for i in range(len(self.models)):
             if i == 0:

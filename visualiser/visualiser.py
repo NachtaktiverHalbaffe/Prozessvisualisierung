@@ -1,6 +1,6 @@
 """
 Filename: visualiser.py
-Version name: 0.1, 2021-05-21
+Version name: 1.0, 2021-07-10
 Short description: Module for visualisation output
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
@@ -8,7 +8,6 @@ Short description: Module for visualisation output
 """
 import pygame  # nopep8
 import logging  # nopep8
-import time  # nopep8
 import sys  # nopep8
 from pygame.locals import *  # nopep8
 from OpenGL.GL import *  # nopep8
@@ -22,7 +21,6 @@ from .package import PackageModel  # nopep8
 from .iaslogo import IASModel  # nopep8
 from .timer import Timer  # nopep8
 from api.constants import BASE_LEVEL_HEIGHT, STREAM_HANDLER, FILE_HANDLER_PV, FILE_HANDLER_ERROR  # nopep8
-from carrierdetection.carrierdetection import CarrierDetection  # nopep8
 
 
 class Visualiser(object):
@@ -59,6 +57,7 @@ class Visualiser(object):
     Animations
     """
 
+    # animate an empty belt
     def displayIdle(self):
         self.logger.info("[VISUALISATION] Display idle")
         skybox = Skybox()
@@ -78,6 +77,7 @@ class Visualiser(object):
 
         return True
 
+    # display an an single frame of empty belt
     def displayIdleStill(self):
         self.logger.info("[VISUALISATION] Display idle")
         skybox = Skybox()
@@ -93,6 +93,7 @@ class Visualiser(object):
 
         return True
 
+    # animate an incoming carrier
     def displayIncomingCarrier(self):
         self.logger.info("[VISUALISATION] Display incoming carrier")
         skybox = Skybox()
@@ -127,6 +128,7 @@ class Visualiser(object):
         glDeleteTextures(texture_id)
         return True
 
+    # animate an outgoing carrier
     def displayOutgoingCarrier(self):
         self.logger.info("[VISUALISATION] Display outgoing carrier")
         skybox = Skybox()
@@ -153,6 +155,9 @@ class Visualiser(object):
         glDeleteTextures(texture_id)
         return True
 
+    # animate the machining process itself
+    # @params
+    #   carrierDetection: instance of carrierdetection which already runs in processvisualisation
     def displayProcessVisualisation(self, carrierDetection):
         self.logger.info("[VISUALISER] Display processvisualisation")
         DRY_TIME = 3
@@ -230,13 +235,15 @@ class Visualiser(object):
             self._enableGLFeatures(False)
             pygame.display.flip()
             pygame.time.wait(40)
-        
+
         # kill the Checkforintrusion thread
         carrierDetection.killIntrusionDetection()
         return True
 
     # animation of the task "color". It gets applied on a
     # static 3d model
+    # @params:
+    #   time: time which already elapsed during the animation
     def paint(self, currentTime):
         self.model.paintColor = self.paintColor
         self.model.setAlpha(0.2 * currentTime)
@@ -244,12 +251,14 @@ class Visualiser(object):
 
     # animation of the task "unpackage". It gets applied on a
     # static 3d model
+    #   time: time which already elapsed during the animation
     def unpackage(self, currentTime):
         PackageModel().unpackage(currentTime)
         self.drawModel()
 
     # animation of the task "package". It gets applied on a
     # static 3d model
+    #   time: time which already elapsed during the animation
     def package(self, currentTime):
         PackageModel().package(currentTime)
         self.drawModel()
@@ -258,7 +267,7 @@ class Visualiser(object):
     utils
     """
 
-    # loads 3d-model into the visuliser
+    # choose the 3D-Model with which the visualisation task should be executed
     def loadModel(self):
         if self.modelName == 'IAS-Logo':
             self.model = IASModel()
@@ -298,6 +307,9 @@ class Visualiser(object):
 
         glEnable(GL_COLOR_MATERIAL)
 
+    # enable/disable all specified openglfeatures
+    # @params:
+    #   isEnabled: if features should be enabled (True) or disabled (False)
     def _enableGLFeatures(self, isEnabled):
         if isEnabled:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -306,6 +318,9 @@ class Visualiser(object):
         elif not isEnabled:
             glDisable(GL_COLOR_MATERIAL)
 
+    # handle all events like button presses
+    # @params:
+    #   texture_id: id of the loaded texture of the skybox
     def _eventLoop(self, texture_id):
         # check events for closing
         for event in pygame.event.get():
@@ -367,6 +382,5 @@ if __name__ == "__main__":
     visualiser.displayProcessVisualisation()
     input("Continue")
     visualiser.displayOutgoingCarrier()
-    # visualiser.displayIdle()
     pygame.quit()
     quit()

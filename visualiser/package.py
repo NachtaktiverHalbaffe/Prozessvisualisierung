@@ -1,20 +1,17 @@
 """
 Filename: package.py
-Version name: 0.1, 2021-05-25
+Version name: 1.0, 2021-07-10
 Short description: model object of package
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
 from .model import Model
-import pygame
 import pywavefront
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from api.constants import CWP_DIR
-import time
-import os
 import sys
 sys.path.append('.')
 sys.path.append('..')

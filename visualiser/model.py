@@ -1,7 +1,7 @@
 """
 Filename: model.py
-Version name: 0.1, 2021-05-21
-Short description: 3d model Superclass
+Version name: 1.0, 2021-07-10
+Short description: 3d model Superclass from which all 3D-Models inherits from
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
@@ -66,7 +66,7 @@ class Model(object):
     # needs its own assemble animation (unlike package, unpackage and color which are applied to an static model).
     # Animate with translations and rotations.
     # @params:
-    # time: elapsed time of the workingprocess
+    #   time: elapsed time of the workingprocess
     def assemble(self, time):
         pass
 
@@ -75,7 +75,7 @@ class Model(object):
     # needs its own assemble animation (unlike package, unpackage and color which are applied to an static model).
     # Animate with translations and rotations.
     # @params:
-    # time: elapsed time of the workingprocess
+    #   time: elapsed time of the workingprocess
     def generic(self, time):
         pass
 
@@ -84,6 +84,9 @@ class Model(object):
     """
 
     # This Methods gets model data (vertices, faces etc. from the .obj file) and creates a 3D model
+    # @params:
+    #   model: loaded .obj model
+    #   color: color of model
     def _drawModel(self, model, color):
         # calculating parameter
         scene_box = (model.vertices[0], model.vertices[0])

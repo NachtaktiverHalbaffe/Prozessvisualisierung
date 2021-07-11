@@ -1,6 +1,6 @@
 """
 Filename: processvisualisation.py
-Version name: 0.1, 2021-05-31
+Version name: 1.0, 2021-07-10
 Short description: Module for handling processvisualisation
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
@@ -53,7 +53,6 @@ class ProcessVisualisation(object):
         self.errorLogger.addHandler(STREAM_HANDLER)
         self.errorLogger.addHandler(FILE_HANDLER_ERROR)
 
-
     # Handles the process of executing a visualisation task
     def executeOrder(self):
         from api.settings import visualiser
@@ -68,7 +67,8 @@ class ProcessVisualisation(object):
             visualiser.initPygame()
         visualiser.reviveVisualiser()
         # start carrierdetection
-        Thread(target=self.carrierDetection.detectCarrier, args=[self.baseLevelHeight]).start()
+        Thread(target=self.carrierDetection.detectCarrier,
+               args=[self.baseLevelHeight]).start()
 
         """
         Incoming carrier
@@ -78,12 +78,13 @@ class ProcessVisualisation(object):
             self._updateVisualiser()
             Thread(target=self._updateState, args=["waiting"]).start()
             visualiser.displayIdleStill()
+        # visualisation task got aborted
         else:
             visualiser.displayIdleStill()
             Thread(target=self._idleAnimation).start()
             self.pvStopFlag.clear()
             return
-        
+
         while True:
             # check if processvisualisation got aborted
             if not self.pvStopFlag.is_set():
@@ -99,6 +100,7 @@ class ProcessVisualisation(object):
                         "[PROCESSVISUALISATION] Carrier entered the unit. Display animations")
                     visualiser.displayIncomingCarrier()
                     break
+            # visualisation task got aborted
             else:
                 Thread(target=self._idleAnimation).start()
                 self.pvStopFlag.clear()
@@ -130,18 +132,19 @@ class ProcessVisualisation(object):
                                   msg="Visualisation task isnt executable because workingpiece is in wrong state. Aborting processVisualisation on unit:" + str(self.boundToResource))
                         break
                 elif self.carrierDetection.detectedOnExit:
-                        # detects carrier leaving the unit => carrier was only driving through unit
-                        self.errorLogger.error(
-                            "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
-                        sendError(
-                            level="[WARNING]", msg="Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
-                        Thread(target=self._updateState,
-                               args=["finished"]).start()
-                        visualiser.displayOutgoingCarrier()
-                        self.carrierDetection.killCarrierDetection()
-                        return self.executeOrder()
+                    # detects carrier leaving the unit => carrier was only driving through unit
+                    self.errorLogger.error(
+                        "[PROCESSVISUALISATION] Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
+                    sendError(
+                        level="[WARNING]", msg="Bound resource under unit isnt executing a task and carrier leaved the unit. Assuming detected carrier hasnt a assigned task")
+                    Thread(target=self._updateState,
+                           args=["finished"]).start()
+                    visualiser.displayOutgoingCarrier()
+                    self.carrierDetection.killCarrierDetection()
+                    return self.executeOrder()
                 else:
                     time.sleep(0.5)
+        # visualisation task got aborted
         else:
             Thread(target=self._idleAnimation).start()
             self.pvStopFlag.clear()
@@ -156,6 +159,7 @@ class ProcessVisualisation(object):
                 if self.carrierDetection.detectedOnExit:
                     visualiser.displayOutgoingCarrier()
                     break
+            # visualisation task got aborted
             else:
                 Thread(target=self._idleAnimation).start()
                 self.pvStopFlag.clear()
@@ -176,6 +180,8 @@ class ProcessVisualisation(object):
         self.logger.info(
             "[PROCESSVISUALISATION] Carrier leaved the unit. Visualisation ended.")
 
+    # loads the states of the visualisationtask, workingpiece and state of unit and applies them to
+    # the processvisualisation and all components in it
     def updateOrder(self):
         from api.models import StateModel, StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         # update task data
@@ -220,6 +226,8 @@ class ProcessVisualisation(object):
         visualiser.setTask(self.task)
 
     # update state of unit internally and also on mes
+    # @params:
+    #   newState: String of new state for the attribute state in the state of unit
     def _updateState(self, newState):
         from api.models import StateModel  # nopep8
         # update stateworkingpiece
@@ -237,7 +245,8 @@ class ProcessVisualisation(object):
             "state": newState,
             "assignedTask": task
         }
-        Thread(target=updateStateVisualisationUnit, args=[state.boundToResourceID, data]).start()
+        Thread(target=updateStateVisualisationUnit, args=[
+               state.boundToResourceID, data]).start()
 
     # display idle animation
     def _idleAnimation(self):
@@ -273,9 +282,10 @@ class ProcessVisualisation(object):
             "color": workingPiece.color,
             "storageLocation": 0,
         }
-        Thread(target=updateStateWorkingPiece,args=[workingPiece.pieceID, data]).start()
+        Thread(target=updateStateWorkingPiece, args=[
+               workingPiece.pieceID, data]).start()
 
-    # cleanup local database
+    # cleanup local database and kill carrierDetection
     def _cleanup(self):
         from api.models import StateWorkingPieceModel, VisualisationTaskModel  # nopep8
         # delete visualisation task from local database

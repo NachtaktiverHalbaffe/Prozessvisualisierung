@@ -1,15 +1,15 @@
 """
 Filename: resources.py
-Version name: 0.1, 2021-05-31
-Short description: resources for flask api
+Version name: 1.0, 2021-07-10
+Short description: resources for flask api (defining actions depending on type of request)
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
 
 """
 from api.models import StateWorkingPieceModel
-from mesrequests import getStateWorkingPiece, updateStateVisualisationUnit, updateStateVisualisationUnit
+from mesrequests import getStateWorkingPiece, updateStateVisualisationUnit, updateStateVisualisationUnit, deleteStateVisualisationUnit
 from models import *
-from settings import visualiser, db, processVisualisation 
+from settings import visualiser, db, processVisualisation
 from flask_restful import Resource, reqparse, fields, marshal_with, abort
 from threading import Thread
 
@@ -106,7 +106,8 @@ class VisualisationTask(Resource):
         db.session.commit()
 
         # get StateWorkingPiece
-        Thread(target=getStateWorkingPiece, args=[task.assignedWorkingPiece]).start()
+        Thread(target=getStateWorkingPiece, args=[
+               task.assignedWorkingPiece]).start()
         # start visualisation task
         try:
             visualiser.killVisualiser()
@@ -128,14 +129,15 @@ class VisualisationTask(Resource):
         state.state = "idle"
         db.session.add(state)
         db.session.commit()
-        processVisualisation.kill() 
+        processVisualisation.kill()
         visualiser.killVisualiser()
         # inform mes and quit processvisualisation
         data = {
             "state": state.state,
             "assignedTask": "None",
         }
-        Thread(target=updateStateVisualisationUnit, args=[state.boundToResourceID, data]).start()
+        Thread(target=updateStateVisualisationUnit, args=[
+               state.boundToResourceID, data]).start()
         return "", 204
 
     @marshal_with(resourceFields)
@@ -217,7 +219,6 @@ class StateWorkingPiece(Resource):
             "carrierID", type=int, help="Id of carrier where workingpiece is located")
 
     # handle put request
-
     @marshal_with(resourceFields)
     def put(self):
         # parse arguments from the request
@@ -304,8 +305,10 @@ class StateWorkingPiece(Resource):
 class BindToResource(Resource):
     resourceFields = {
         'id': fields.Integer,
-        'task': fields.String,
-        'assignedWorkingPiece': fields.Integer
+        'state': fields.String,
+        'boundToResourceID': fields.Integer,
+        'ipAdress': fields.String,
+        'baseLevelHeight': fields.Float
     }
 
     @ marshal_with(resourceFields)
@@ -313,50 +316,66 @@ class BindToResource(Resource):
         state = StateModel.query.first()
         if not state:
             abort(404, message="No state available")
+        # delete old instance of visualisationunit in mes because changing
+        # boundTORessource will create a new one
+        deleteStateVisualisationUnit(state.boundToResourceID)
+        # change boundToResourceID
         state.boundToResourceID = bindToResource
         db.session.add(state)
         db.session.commit()
-        payload={
-            "boundToRessource":state.boundToResourceID,
+        payload = {
+            "boundToRessource": state.boundToResourceID,
             "state": state.state,
             "ipAdress": state.ipAdress,
             "baseLevelHeight": state.baseLevelHeight,
         }
-        Thread(target= updateStateVisualisationUnit, args=[state.boundToResourceID, payload]).start()
-        return "", 201
+        # update state in mes
+        Thread(target=updateStateVisualisationUnit, args=[
+               state.boundToResourceID, payload]).start()
+        return state, 201
 
     @ marshal_with(resourceFields)
     def put(self, bindToResource):
         state = StateModel.query.first()
         if not state:
             abort(404, message="No state available")
+        # delete old instance of visualisationunit in mes because changing
+        # boundTORessource will create a new one
+        deleteStateVisualisationUnit(state.boundToResourceID)
+        # change boundToResourceID
         state.boundToResourceID = bindToResource
         db.session.add(state)
         db.session.commit()
-        payload={
-            "boundToRessource":state.boundToResourceID,
+        payload = {
+            "boundToRessource": state.boundToResourceID,
             "state": state.state,
             "ipAdress": state.ipAdress,
             "baseLevelHeight": state.baseLevelHeight,
         }
-        Thread(target= updateStateVisualisationUnit, args=[state.boundToResourceID, payload]).start()
-        return "", 201
+        # update state in mes
+        Thread(target=updateStateVisualisationUnit, args=[
+               state.boundToResourceID, payload]).start()
+        return state, 201
 
     @ marshal_with(resourceFields)
     def get(self, bindToResource):
         state = StateModel.query.first()
         if not state:
             abort(404, message="No state available")
+        # delete old instance of visualisationunit in mes because changing
+        # boundTORessource will create a new one
+        deleteStateVisualisationUnit(state.boundToResourceID)
+        # change boundToResourceID
         state.boundToResourceID = bindToResource
         db.session.add(state)
         db.session.commit()
-        payload={
-            "boundToRessource":state.boundToResourceID,
+        payload = {
+            "boundToRessource": state.boundToResourceID,
             "state": state.state,
             "ipAdress": state.ipAdress,
             "baseLevelHeight": state.baseLevelHeight,
         }
-        
-        Thread(target= updateStateVisualisationUnit, args=[state.boundToResourceID, payload]).start()
-        return "", 201
-
+        # update state in mes
+        Thread(target=updateStateVisualisationUnit, args=[
+               state.boundToResourceID, payload]).start()
+        return state, 201

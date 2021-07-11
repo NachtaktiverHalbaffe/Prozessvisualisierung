@@ -1,6 +1,6 @@
 """
 Filename: skybox.py
-Version name: 0.1, 2021-06-07
+Version name: 1.0, 2021-07-10
 Short description: Skybox model. Shows the conveyor belt of branch
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
@@ -20,6 +20,7 @@ class Skybox(object):
     def __init__(self):
         pass
 
+    # ground model
     def ground(self):
         matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
         x = matrix[3][0]
@@ -45,12 +46,15 @@ class Skybox(object):
         glTexCoord2f(0, 1)
         glVertex3fv(vertices[3])
         glEnd()
-        
+
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
         glDisable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
         glDisable(GL_COLOR_MATERIAL)
 
+    # load texture from storage into ram
+    # @return:
+    #   id: id of the loaded texture
     def loadTexture(self):
         PATH_TEXTURE = CWP_DIR + '/visualiser/3dmodels/tex.bmp'
         # loading texture

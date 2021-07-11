@@ -1,6 +1,6 @@
 """
 Filename: mesrequests.py
-Version name: 0.1, 2021-06-14
+Version name: 1.0, 2021-07-10
 Short description: Common http requests to or from the mes
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
@@ -20,8 +20,12 @@ errorLogger.addHandler(STREAM_HANDLER)
 errorLogger.addHandler(FILE_HANDLER_ERROR)
 
 
+# send error to mes
+# @params:
+#   msg: message of error
+#   level: level of error
+#   category: category of error
 def sendError(msg, level="[WARNING]", category="Operational issue"):
-
     data = {
         "msg": msg,
         "category": category,
@@ -37,6 +41,9 @@ def sendError(msg, level="[WARNING]", category="Operational issue"):
             "[MESREQUESTS] Couldn't send error to MES. Check Connection")
 
 
+# get the state of an specific workingpiece
+# @params:
+#   id: id of requested workingpiece
 def getStateWorkingPiece(id):
     from models import StateWorkingPieceModel
     from settings import db
@@ -63,6 +70,9 @@ def getStateWorkingPiece(id):
             "[MESREQUESTS] Couldn't get StateWorkingPiece from MES. Check Connection")
 
 
+# get the state of an specific resource
+# @params:
+#   id: id of requested resource
 def getStatePLC(id):
     try:
         request = requests.get(
@@ -75,6 +85,10 @@ def getStatePLC(id):
             "[MESREQUESTS] Couldn't get StatePLC from MES. Check Connection")
 
 
+# update state of the visualisation unit in mes
+# @params:
+#   id: id of the visualisation unit
+#   data: data to send. Must be an dictionary
 def updateStateVisualisationUnit(id, data):
     try:
         request = requests.post(
@@ -88,11 +102,28 @@ def updateStateVisualisationUnit(id, data):
                     errorLogger.warning("[MESREQUESTS] " + request.status_code)
             except Exception as e:
                 errorLogger.warning(
-            "[MESREQUESTS] Couldn't update StateVisualisationUnit in MES. Check Connection")
+                    "[MESREQUESTS] Couldn't update StateVisualisationUnit in MES. Check Connection")
     except Exception as e:
         pass
 
 
+# delete state of a visualisation unit in mes
+# @params:
+#   id: id of the visualisation unit
+def deleteStateVisualisationUnit(id):
+    try:
+        request = requests.delete(
+            IP_MES+":8000/api/StateVisualisationUnit/" + str(id))
+        if not request.ok:
+            errorLogger.warning("[MESREQUESTS] " + request.status_code)
+    except Exception as e:
+        errorLogger.warning(e)
+
+
+# update state of an workingpiece in mes
+# @params:
+#   id: id of the workingpiece
+#   data: data to send. must be an dicitionary
 def updateStateWorkingPiece(id, data):
     try:
         request = requests.patch(

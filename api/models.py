@@ -1,6 +1,6 @@
 """
-Filename: processvisualisationapi.py
-Version name: 0.1, 2021-05-31
+Filename: models.py
+Version name: 1.0, 2021-07-0
 Short description: data models
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
@@ -31,7 +31,7 @@ class VisualisationTaskModel(db.Model):
 
 class StateModel(db.Model):
     __table_args__ = {'extend_existing': True}
-     # internal id. There can be only one instance of the model at each time
+    # internal id. There can be only one instance of the model at each time
     id = db.Column(db.Integer, primary_key=True)
     # state of the unit. can be "idle", "waiting", "playing" and "finished"
     state = db.Column(db.String(20), nullable=False)
@@ -48,7 +48,7 @@ class StateModel(db.Model):
 
 class StateWorkingPieceModel(db.Model):
     __table_args__ = {'extend_existing': True}
-     # internal id. There can be only one instance of the model at each time
+    # internal id. There can be only one instance of the model at each time
     id = db.Column(db.Integer, primary_key=True)
     # id of the workingpiece
     pieceID = db.Column(db.Integer, nullable=False)
@@ -64,4 +64,4 @@ class StateWorkingPieceModel(db.Model):
     model = db.Column(db.String(100), nullable=True)
 
     def __repr__(self):
-        return f"StateWorkingPiece(state = {state}, color = {color}, assembled = {str(assembled)}, packaged = {str(packaged)}, model = {model},carrierID = {str(carrierID)})"
+        return f"StateWorkingPiece(pieceID= {pieceID}, color = {color}, assembled = {str(assembled)}, packaged = {str(packaged)}, model = {model},carrierID = {str(carrierID)})"

@@ -1,3 +1,12 @@
+"""
+Filename: constants.py
+Version name: 1.0, 2021-07-10
+Short description: system wide constants
+
+(C) 2003-2021 IAS, Universitaet Stuttgart
+
+"""
+
 import os
 import logging
 from carrierdetection.carrierdetection import CarrierDetection

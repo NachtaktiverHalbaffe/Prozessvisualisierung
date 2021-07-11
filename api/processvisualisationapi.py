@@ -1,6 +1,6 @@
 """
 Filename: processvisualisationapi.py
-Version name: 0.1, 2021-05-20
+Version name: 1.0, 2021-07-0
 Short description: Module for providing the REST Interface
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         state.id = 1
         state.ipAdress = ipAdress
         state.baseLevelHeight = BASE_LEVEL_HEIGHT
-        state.state= "idle"
+        state.state = "idle"
     db.session.add(state)
     db.session.commit()
 
@@ -75,8 +75,10 @@ if __name__ == "__main__":
         "baseLevelHeight": state.baseLevelHeight,
         "assignedTask": assignedTask,
     }
+
     # send request to mes
-    Thread(target=updateStateVisualisationUnit,args=[state.boundToResourceID, data]).start()
+    Thread(target=updateStateVisualisationUnit, args=[
+           state.boundToResourceID, data]).start()
 
     # ! In production change debug to false
     app.run(debug=False, host="0.0.0.0")

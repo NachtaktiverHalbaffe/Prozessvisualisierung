@@ -1,6 +1,6 @@
 """
 Filename: carrierdetection.py
-Version name: 0.1, 2021-05-20
+Version name: 1.0, 2021-07-10
 Short description: Module for detecting the carrier with ultrasonic sensor
 
 (C) 2003-2021 IAS, Universitaet Stuttgart
@@ -15,10 +15,10 @@ from threading import Event
 class CarrierDetection(object):
 
     def __init__(self):
-        # Threshold for detecting a carrier. 
+        # Threshold for detecting a carrier.
         # If baselevel-measureddistance < threshold, it gets detected
         self.DETECT_THRESHOLD = 3
-        # Threshold for detecting a carrier. 
+        # Threshold for detecting a carrier.
         # If baselevel-measureddistance < threshold, it gets detected
         self.INTRUSION_THRESHOLD = 5
         # intern params
@@ -29,9 +29,9 @@ class CarrierDetection(object):
         self.detectedOnExit = False
         self.detectedIntrusion = False
         # Flags for stopping the threads
-        self.stopFlag = Event() # for detectCarrier
+        self.stopFlag = Event()  # for detectCarrier
         self.stopFlag.clear()
-        self.stopFlagIntr = Event() # for checkforintrusion
+        self.stopFlagIntr = Event()  # for checkforintrusion
         self.stopFlagIntr.clear()
         # setup sensors
         self.GPIO_TRIGGER_1 = 23  # entrance
@@ -63,34 +63,40 @@ class CarrierDetection(object):
         self.logger.handlers = []
         self.logger.addHandler(stream_handler)
         self.logger.addHandler(file_handler_pv)
-    
+
     def __del__(self):
         self.stopFlag.set()
         self.stopFlagIntr.set()
         GPIO.cleanup()
 
-    # measure the baselevelheight
+    # measure the baselevelheight to calibrate the sensors
     def calibrate(self):
         self.stopFlag.clear()
         self._measureExit(sample_size=11)
         time.sleep(0.5)
         self._measureEntrance(sample_size=11)
-        self.logger.info("[CALIBRATE BASELEVEL] Distance on entrance: " + str(self.distanceEntrance))
-        self.logger.info("[CALIBRATE BASELEVEL] Distance on exit: " + str(self.distanceExit))
+        self.logger.info(
+            "[CALIBRATE BASELEVEL] Distance on entrance: " + str(self.distanceEntrance))
+        self.logger.info(
+            "[CALIBRATE BASELEVEL] Distance on exit: " + str(self.distanceExit))
 
         if abs(self.distanceEntrance - self.distanceExit) < 5:
             self.baseLevel = (self.distanceEntrance+self.distanceExit)/2
             # format baselevel to 2 decimal places
             self.baseLevel = "{:.2f}".format(self.baseLevel)
-            self.logger.info("[CALIBRATE BASELEVEL] Calibration successful. Baselevel height: " + str(self.baseLevel))
+            self.logger.info(
+                "[CALIBRATE BASELEVEL] Calibration successful. Baselevel height: " + str(self.baseLevel))
             return
         else:
-            self.logger.warning("[WARNING] Measured distance in entrance and exit differs too much. Calibrating again...")
+            self.logger.warning(
+                "[WARNING] Measured distance in entrance and exit differs too much. Calibrating again...")
             self.baseLevel = 0.0
             return self.calibrate()
 
-    # detect the carrier on either entrance or exit if the unit. 
+    # detect the carrier on either entrance or exit if the unit.
     # Runs in a thread in processvisualisation
+    # @params:
+    #   baseLevelHeight: calibrated default distance between sensor and belt without carrier underneath it
     def detectCarrier(self, baseLevelHeight):
         self.stopFlag.clear()
         self.detectedOnEntrance = False
@@ -103,31 +109,32 @@ class CarrierDetection(object):
                 self._measureEntrance(sample_size=3)
                 self._measureExit(sample_size=3)
             except Exception as e:
-                self.logger.error('[CARRIERDETECTION] Scan currently not possible. Exception: ', e)
+                self.logger.error(
+                    '[CARRIERDETECTION] Scan currently not possible. Exception: ', e)
                 self.distanceEntrance = baseLevelHeight
                 self.distanceExit = baseLevelHeight
-            
-    
-            #check for detection on exit
+
+            # check for detection on exit
             if baseLevelHeight - self.distanceExit > self.DETECT_THRESHOLD:
                 self.detectedOnExit = True
                 self.stopFlag.clear()
                 self.logger.info("[CARRIERDETECTION] Detected Carrier on Exit")
             else:
                 self.detectedOnExit = False
-            #check for detection on entrance
+            # check for detection on entrance
             if baseLevelHeight - self.distanceEntrance > self.DETECT_THRESHOLD:
                 self.detectedOnEntrance = True
                 self.stopFlag.clear()
-                self.logger.info("[CARRIERDETECTION] Detected Carrier on Entrance")
+                self.logger.info(
+                    "[CARRIERDETECTION] Detected Carrier on Entrance")
             else:
                 self.detectedOnEntrance = False
                 self.stopFlag.clear()
 
-            
-        
-    # measures if a intrusion is detected on either the entrance or exit. 
+    # measures if a intrusion is detected on either the entrance or exit.
     # Doesnt care where its detected, only checks for general intrusion
+    # @params:
+    #   baseLevelHeight: calibrated default distance between sensor and belt without carrier underneath it
     def checkForIntrusion(self, baseLevelHeight):
         self.stopFlagIntr.clear()
         self.detectedIntrusion = False
@@ -144,19 +151,21 @@ class CarrierDetection(object):
     # stop the carrierdetection threads
     def killCarrierDetection(self):
         self.stopFlag.set()
-    
+
     # stop the checkForIntrusion threads
     def killIntrusionDetection(self):
         self.stopFlagIntr.set()
 
-
-    # sensor logic on the sensor on the entrance. 
+    # sensor logic on the sensor on the entrance.
     # Values gets sampled, if no samples are wanted, then set sample_size=1
-    def _measureEntrance(self, sample_size = 5, sample_wait = 0.1):
+    # @params:
+    #   sample_size: number of samples for each measurement from which distance gets calculated
+    #   sample_wait: time between the measurements of each sample
+    def _measureEntrance(self, sample_size=5, sample_wait=0.1):
         samples = []
         for sample in range(sample_size):
-            time_end= 0
-            time_start=0
+            time_end = 0
+            time_start = 0
             GPIO.output(self.GPIO_TRIGGER_1, GPIO.LOW)
             time.sleep(sample_wait)
             GPIO.output(self.GPIO_TRIGGER_1, True)
@@ -164,30 +173,32 @@ class CarrierDetection(object):
             GPIO.output(self.GPIO_TRIGGER_1, False)
             echo_status_counter = 1
             while GPIO.input(self.GPIO_ECHO_1) == False:
-                    if echo_status_counter < 10000:
-                        time_start = time.time()
-                        echo_status_counter += 1
-                    else:
-                        return       
+                if echo_status_counter < 10000:
+                    time_start = time.time()
+                    echo_status_counter += 1
+                else:
+                    return
             while GPIO.input(self.GPIO_ECHO_1) == True:
                 time_end = time.time()
             # the measured distance is output in cm
             # distance = (delta_time * schallgeschw.)/ 2
-            if (time_start != 0 and time_end !=0):
+            if (time_start != 0 and time_end != 0):
                 samples.append(((time_end - time_start) * 34300) / 2)
         # calculating with avergae value
         #self.distanceEntrance = sum(samples)/len(samples)
         # calculating with median
-        self.distanceEntrance = sorted(samples)[len(samples) //2]
-
+        self.distanceEntrance = sorted(samples)[len(samples) // 2]
 
     # sensor logic on the sensor on the exit
     # Values gets sampled, if no samples are wanted, then set sample_size=1
-    def _measureExit(self,sample_size = 5, sample_wait = 0.1):
+    # @params:
+    #   sample_size: number of samples for each measurement from which distance gets calculated
+    #   sample_wait: time between the measurements of each sample
+    def _measureExit(self, sample_size=5, sample_wait=0.1):
         samples = []
         for sample in range(sample_size):
-            time_end= 0
-            time_start=0
+            time_end = 0
+            time_start = 0
             GPIO.output(self.GPIO_TRIGGER_2, GPIO.LOW)
             time.sleep(sample_wait)
             GPIO.output(self.GPIO_TRIGGER_2, True)
@@ -196,17 +207,17 @@ class CarrierDetection(object):
             echo_status_counter = 1
             while GPIO.input(self.GPIO_ECHO_2) == False:
                 if echo_status_counter < 10000:
-                        time_start = time.time()
-                        echo_status_counter += 1
+                    time_start = time.time()
+                    echo_status_counter += 1
                 else:
-                    return   
+                    return
             while GPIO.input(self.GPIO_ECHO_2) == True:
                 time_end = time.time()
             # the measured distance is output in cm
             # distance = (delta_time * schallgeschw.)/ 2
-            if (time_start != 0 and time_end !=0):
+            if (time_start != 0 and time_end != 0):
                 samples.append(((time_end - time_start) * 34300) / 2)
         # calculating with avergae value
         #self.distanceExit = sum(samples)/len(samples)
         # calculating with median
-        self.distanceExit = sorted(samples)[len(samples) //2]
+        self.distanceExit = sorted(samples)[len(samples) // 2]
