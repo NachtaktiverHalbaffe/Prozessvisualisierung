@@ -99,6 +99,7 @@ class CarrierDetection(object):
     #   baseLevelHeight: calibrated default distance between sensor and belt without carrier underneath it
     def detectCarrier(self, baseLevelHeight):
         self.stopFlag.clear()
+        self.baseLevel = baseLevelHeight
         self.detectedOnEntrance = False
         self.detectedOnExit = False
         self.distanceEntrance = baseLevelHeight
@@ -187,7 +188,10 @@ class CarrierDetection(object):
         # calculating with avergae value
         #self.distanceEntrance = sum(samples)/len(samples)
         # calculating with median
-        self.distanceEntrance = sorted(samples)[len(samples) // 2]
+        if len(samples)!= 0:
+            self.distanceEntrance = sorted(samples)[len(samples) // 2]
+        else:
+            self.distanceEntrance = self.baseLevel
 
     # sensor logic on the sensor on the exit
     # Values gets sampled, if no samples are wanted, then set sample_size=1
@@ -220,4 +224,7 @@ class CarrierDetection(object):
         # calculating with avergae value
         #self.distanceExit = sum(samples)/len(samples)
         # calculating with median
-        self.distanceExit = sorted(samples)[len(samples) // 2]
+        if len(samples) != 0:
+            self.distanceExit = sorted(samples)[len(samples) // 2]
+        else:
+            self.distanceExit = self.baseLevel

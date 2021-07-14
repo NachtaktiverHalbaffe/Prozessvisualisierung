@@ -24,6 +24,7 @@ class Model(object):
         self.color = '#000000'
         self.paintColor = '#000000'
         self.alpha = 1
+        self.task="assemble"
         # path to the .obj-files of the model
         self.modelNames = []
         # "master" scale to all models
@@ -49,6 +50,8 @@ class Model(object):
     def setPaintColor(self, paintColor):
         self.paintColor = paintColor
 
+    def setTask(self,task):
+        self.task = task
     """
     animations which needs to be overridden in inherited class
     """

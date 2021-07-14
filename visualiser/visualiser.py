@@ -38,7 +38,7 @@ class Visualiser(object):
         self.isPackaged = False
         self.paintColor = "#00fcef"
         self.color = '#CCCCCC'
-        self.task = 'color'
+        self.task = 'assemble'
 
         # setup logger
         self.logger = logging.getLogger("visualiser")
@@ -174,6 +174,7 @@ class Visualiser(object):
 
         # drawing loop
         while not finished:
+            self.model.setTask(self.task)
             self._eventLoop(texture_id)
             self._enableGLFeatures(True)
             # check for object intrusion
@@ -208,6 +209,7 @@ class Visualiser(object):
                 else:
                     finished = True
                     self.model.setColor(self.paintColor)
+                    self.color= self.paintColor
                     self.paint(currentTime)
             elif self.task == 'package':
                 if currentTime < 5:
