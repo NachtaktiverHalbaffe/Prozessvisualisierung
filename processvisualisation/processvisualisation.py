@@ -103,7 +103,6 @@ class ProcessVisualisation(object):
             # visualisation task got aborted
             else:
                 Thread(target=self._idleAnimation).start()
-                self.pvStopFlag.clear()
                 return
 
         """
@@ -116,8 +115,9 @@ class ProcessVisualisation(object):
                 data = getStatePLC(self.boundToResource)
                 # only display visualisation if bound resource is also busy
                 if data["state"] == "busy":
+                    # only display visualisation if workingpiece has right state
                     if self._validateTask():
-                        Thread(target=self._updateVisualiser).start()
+                        self._updateVisualiser()
                         if visualiser.displayProcessVisualisation(self.carrierDetection):
                             Thread(target=self._updateState,
                                    args=["finished"]).start()
@@ -147,7 +147,6 @@ class ProcessVisualisation(object):
         # visualisation task got aborted
         else:
             Thread(target=self._idleAnimation).start()
-            self.pvStopFlag.clear()
             return
 
         """
@@ -162,7 +161,6 @@ class ProcessVisualisation(object):
             # visualisation task got aborted
             else:
                 Thread(target=self._idleAnimation).start()
-                self.pvStopFlag.clear()
                 return
 
         """

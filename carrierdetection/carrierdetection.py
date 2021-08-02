@@ -163,35 +163,8 @@ class CarrierDetection(object):
     #   sample_size: number of samples for each measurement from which distance gets calculated
     #   sample_wait: time between the measurements of each sample
     def _measureEntrance(self, sample_size=5, sample_wait=0.1):
-        samples = []
-        for sample in range(sample_size):
-            time_end = 0
-            time_start = 0
-            GPIO.output(self.GPIO_TRIGGER_1, GPIO.LOW)
-            time.sleep(sample_wait)
-            GPIO.output(self.GPIO_TRIGGER_1, True)
-            time.sleep(0.00002)
-            GPIO.output(self.GPIO_TRIGGER_1, False)
-            echo_status_counter = 1
-            while GPIO.input(self.GPIO_ECHO_1) == False:
-                if echo_status_counter < 10000:
-                    time_start = time.time()
-                    echo_status_counter += 1
-                else:
-                    return
-            while GPIO.input(self.GPIO_ECHO_1) == True:
-                time_end = time.time()
-            # the measured distance is output in cm
-            # distance = (delta_time * schallgeschw.)/ 2
-            if (time_start != 0 and time_end != 0):
-                samples.append(((time_end - time_start) * 34300) / 2)
-        # calculating with avergae value
-        #self.distanceEntrance = sum(samples)/len(samples)
-        # calculating with median
-        if len(samples)!= 0:
-            self.distanceEntrance = sorted(samples)[len(samples) // 2]
-        else:
-            self.distanceEntrance = self.baseLevel
+        self.distanceEntrance = self._measure(
+            self.GPIO_TRIGGER_1, self.GPIO_ECHO_1, sample_size, sample_wait)
 
     # sensor logic on the sensor on the exit
     # Values gets sampled, if no samples are wanted, then set sample_size=1
@@ -199,32 +172,42 @@ class CarrierDetection(object):
     #   sample_size: number of samples for each measurement from which distance gets calculated
     #   sample_wait: time between the measurements of each sample
     def _measureExit(self, sample_size=5, sample_wait=0.1):
+        self.distanceExit = self._measure(
+            self.GPIO_TRIGGER_2, self.GPIO_ECHO_2, sample_size, sample_wait)
+
+    # sensor logic for measuring
+    # @params:
+    #   GPIO_TRIG: Number of Trigger Pin
+    #   GPIO_ECHO: Number of echo Pin
+    #   sample_size: number of samples for each measurement from which distance gets calculated
+    #   sample_wait: time between the measurements of each sample
+    def _measure(self, GPIO_TRIG, GPIO_ECHO, sample_size=5, sample_wait=0.1):
         samples = []
         for sample in range(sample_size):
             time_end = 0
             time_start = 0
-            GPIO.output(self.GPIO_TRIGGER_2, GPIO.LOW)
+            GPIO.output(GPIO_TRIG, GPIO.LOW)
             time.sleep(sample_wait)
-            GPIO.output(self.GPIO_TRIGGER_2, True)
+            GPIO.output(GPIO_TRIG, True)
             time.sleep(0.00002)
-            GPIO.output(self.GPIO_TRIGGER_2, False)
+            GPIO.output(GPIO_TRIG, False)
             echo_status_counter = 1
-            while GPIO.input(self.GPIO_ECHO_2) == False:
+            while GPIO.input(GPIO_ECHO) == False:
                 if echo_status_counter < 10000:
                     time_start = time.time()
                     echo_status_counter += 1
                 else:
                     return
-            while GPIO.input(self.GPIO_ECHO_2) == True:
-                time_end = time.time()
-            # the measured distance is output in cm
-            # distance = (delta_time * schallgeschw.)/ 2
-            if (time_start != 0 and time_end != 0):
-                samples.append(((time_end - time_start) * 34300) / 2)
-        # calculating with avergae value
-        #self.distanceExit = sum(samples)/len(samples)
-        # calculating with median
+                while GPIO.input(GPIO_ECHO) == True:
+                    time_end = time.time()
+                # the measured distance is output in cm
+                # distance = (delta_time * schallgeschw.)/ 2
+                if (time_start != 0 and time_end != 0):
+                    samples.append(((time_end - time_start) * 34300) / 2)
+                # calculating with avergae value
+                #self.distanceExit = sum(samples)/len(samples)
+                # calculating with median
         if len(samples) != 0:
-            self.distanceExit = sorted(samples)[len(samples) // 2]
+            return sorted(samples)[len(samples) // 2]
         else:
-            self.distanceExit = self.baseLevel
+            return self.baseLevel

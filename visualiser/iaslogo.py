@@ -27,7 +27,7 @@ class IASModel(Model):
         self.color = '#CCCCCC'
         self.paintColor = '#000000'
         self.alpha = 1
-        self.task="assemble"
+        self.task = "assemble"
         # path to the .obj-files of the model
         cwd = CWP_DIR
         self.modelNames = [
@@ -83,7 +83,7 @@ class IASModel(Model):
                         colorRGB = self._hexToRGB(self.color)
                     else:
                         colorRGB = (1, 1, 1)
-                    if self.task =="color":
+                    if self.task == "color":
                         paintColorRGB = self._hexToRGB(self.paintColor)
                         colorRGB = tuple(
                             float(colorRGB[i] * (1-self.alpha)) for i in range(len(colorRGB)))

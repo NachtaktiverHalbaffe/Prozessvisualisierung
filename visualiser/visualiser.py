@@ -69,11 +69,11 @@ class Visualiser(object):
             if self.isKilled:
                 glDeleteTextures(texture_id)
                 break
-            self._enableGLFeatures(True)
+            self._enableGLFeatures()
             skybox.ground()
-            self._enableGLFeatures(False)
+            self._disableGLFeatures()
             pygame.display.flip()
-            # pygame.time.wait(40)
+            pygame.time.wait(40)
 
         return True
 
@@ -85,9 +85,9 @@ class Visualiser(object):
 
         # check user closed the game
         self._eventLoop(texture_id)
-        self._enableGLFeatures(True)
+        self._enableGLFeatures()
         skybox.ground()
-        self._enableGLFeatures(False)
+        self._disableGLFeatures()
         pygame.display.flip()
         pygame.time.wait(40)
 
@@ -108,7 +108,7 @@ class Visualiser(object):
                 glDeleteTextures(texture_id)
                 break
 
-            self._enableGLFeatures(True)
+            self._enableGLFeatures()
             # Move model on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < -3:
@@ -120,7 +120,7 @@ class Visualiser(object):
             # drawing
             skybox.ground()
             self.drawModel()
-            self._enableGLFeatures(False)
+            self._disableGLFeatures()
 
             pygame.display.flip()
             pygame.time.wait(40)
@@ -139,7 +139,7 @@ class Visualiser(object):
         while not hasReachedTarget:
             self._eventLoop(texture_id)
 
-            self._enableGLFeatures(True)
+            self._enableGLFeatures()
             # Move model 0.05 unit on x-axis
             matrix = glGetDoublev(GL_MODELVIEW_MATRIX)
             if matrix[3][0] < 9:
@@ -147,7 +147,7 @@ class Visualiser(object):
             else:
                 hasReachedTarget = True
             self.drawModel()
-            self._enableGLFeatures(False)
+            self._disableGLFeatures()
             skybox.ground()
             pygame.display.flip()
             pygame.time.wait(40)
@@ -176,7 +176,7 @@ class Visualiser(object):
         while not finished:
             self.model.setTask(self.task)
             self._eventLoop(texture_id)
-            self._enableGLFeatures(True)
+            self._enableGLFeatures()
             # check for object intrusion
             if not carrierDetection.detectedIntrusion:
                 # no intrusion, get timer time or resume timer
@@ -209,7 +209,7 @@ class Visualiser(object):
                 else:
                     finished = True
                     self.model.setColor(self.paintColor)
-                    self.color= self.paintColor
+                    self.color = self.paintColor
                     self.paint(currentTime)
             elif self.task == 'package':
                 if currentTime < 5:
@@ -234,7 +234,7 @@ class Visualiser(object):
                     self.model.generic(currentTime)
                     self.setIsAssembled(False)
             skybox.ground()
-            self._enableGLFeatures(False)
+            self._disableGLFeatures()
             pygame.display.flip()
             pygame.time.wait(40)
 
@@ -309,16 +309,16 @@ class Visualiser(object):
 
         glEnable(GL_COLOR_MATERIAL)
 
-    # enable/disable all specified openglfeatures
-    # @params:
-    #   isEnabled: if features should be enabled (True) or disabled (False)
-    def _enableGLFeatures(self, isEnabled):
-        if isEnabled:
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glEnable(GL_COLOR_MATERIAL)
-            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-        elif not isEnabled:
-            glDisable(GL_COLOR_MATERIAL)
+    # enable all specified openglfeatures
+    def _enableGLFeatures(self):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glEnable(GL_COLOR_MATERIAL)
+        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+
+    # disable all specified openglfeatures
+
+    def _disableGLFeatures(self):
+        glDisable(GL_COLOR_MATERIAL)
 
     # handle all events like button presses
     # @params:
